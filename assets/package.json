@@ -22,8 +22,8 @@
       }
     },
     "importmap": {
-      "@tacman1123/twig-browser": "^0.4.18",
-      "@tacman1123/twig-browser/adapters/symfony": "^0.4.18",
+      "@tacman1123/twig-browser": "^1.0.0",
+      "@tacman1123/twig-browser/adapters/symfony": "^1.0.0",
       "perfect-scrollbar": "^1.5.6",
       "datatables.net-plugins/i18n/en-GB.mjs": "^2.3.6",
       "datatables.net-plugins/i18n/es-ES.mjs": "^2.3.6",
