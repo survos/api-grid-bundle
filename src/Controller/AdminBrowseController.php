@@ -21,7 +21,15 @@ class AdminBrowseController extends AbstractController
     ) {
     }
 
-    #[Route('/admin/browse/{code}', name: 'survos_admin_browse', defaults: ['code' => null], methods: ['GET'])]
+    // Explicit priority: folio-bundle's FolioController registers unconstrained wildcard routes
+    // (`/{folioCode}/{coreCode}`, `/{folioCode}/{coreCode}/{dtoType}/{localId}`, etc. — no regex
+    // requirement on coreCode/dtoType/localId), so ANY 2-7 segment path structurally matches one
+    // of them. Symfony's router picks the first structurally-matching route by priority then
+    // declaration order — it does NOT prefer the more literal/specific pattern — so without this,
+    // whichever bundle's routes happen to compile first wins, and /admin/browse/{code} silently
+    // resolves as a folio route instead (confirmed via `bin/console router:match`). A route prefix
+    // does NOT fix this: it only shifts which folio wildcard route the path collides with.
+    #[Route('/admin/browse/{code}', name: 'survos_admin_browse', defaults: ['code' => null], methods: ['GET'], priority: 100)]
     public function browse(?string $code = null): Response
     {
         if (!$code) {
