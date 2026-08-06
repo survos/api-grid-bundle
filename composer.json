@@ -23,7 +23,7 @@
         "symfony/http-kernel": "^8.1",
         "symfony/options-resolver": "^8.1",
         "symfony/ux-twig-component": "^3",
-        "twig/twig": "^3.4",
+        "twig/twig": "^3.4|^4.0",
         "symfony/dom-crawler": "^8.1",
         "api-platform/symfony": "^4.1",
         "survos/js-twig-bundle": "^2.5",
