@@ -3,7 +3,6 @@
 // during dev, from project_dir run
 // ln -s ~/survos/bundles/api-grid-bundle/assets/src/controllers/sandbox_api_controller.js assets/controllers/sandbox_api_controller.js
 import { Controller } from "@hotwired/stimulus";
-import $ from "jquery";
 import { createEngine } from "@tacman1123/twig-browser";
 import { installSymfonyTwigAPI } from "@tacman1123/twig-browser/adapters/symfony";
 
@@ -400,6 +399,14 @@ export default class extends Controller {
     }
   }
 
+  #getOrCreateModal(target) {
+    if (!window.bootstrap?.Modal) {
+      console.error("[api-grid] Bootstrap Modal is not available.");
+      return null;
+    }
+    return window.bootstrap.Modal.getOrCreateInstance(target);
+  }
+
   openModal(e) {
     console.error(
       "yay, open modal!",
@@ -413,9 +420,8 @@ export default class extends Controller {
       // do something...
     });
 
-    this.modal = new Modal(this.modalTarget);
-    console.log(this.modal);
-    this.modal.show();
+    this.modal = this.#getOrCreateModal(this.modalTarget);
+    this.modal?.show();
   }
 
   createdRow(row, data, dataIndex) {
@@ -480,8 +486,8 @@ export default class extends Controller {
       console.log(transition, target);
       console.log(data, $event);
       this.that.modalBodyTarget.innerHTML = transition;
-      this.modal = new Modal(this.modalTarget);
-      this.modal.show();
+      this.modal = this.#getOrCreateModal(this.modalTarget);
+      this.modal?.show();
     });
 
     // dt.on('click', 'tr td button .btn-modal',  ($event, x) => {
@@ -497,8 +503,8 @@ export default class extends Controller {
       let modalRoute = btn.dataset.modalRoute;
       if (modalRoute) {
         this.modalBodyTarget.innerHTML = data.code;
-        this.modal = new Modal(this.modalTarget);
-        this.modal.show();
+        this.modal = this.#getOrCreateModal(this.modalTarget);
+        this.modal?.show();
         console.assert(data.rp, "missing rp, add @Groups to entity");
         let formUrl = Routing.generate(modalRoute, {
           ...data.rp,
@@ -540,8 +546,8 @@ export default class extends Controller {
 
       if (modalRoute) {
         this.modalBodyTarget.innerHTML = data.code;
-        this.modal = new Modal(this.modalTarget);
-        this.modal.show();
+        this.modal = this.#getOrCreateModal(this.modalTarget);
+        this.modal?.show();
         console.assert(data.rp, "missing rp, add @Groups to entity");
         let formUrl = Routing.generate(modalRoute, data.rp);
 
