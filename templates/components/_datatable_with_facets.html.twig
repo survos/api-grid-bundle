@@ -2,7 +2,6 @@
     schema: schema,
     globals: this.globals,
     api_call:  apiCall,
-  #  searchBuilderColumns: this.searchBuilderColumns,
     locale: locale,
     globals: globals,
     buttons: buttons|default([]),
@@ -10,7 +9,7 @@
 # arguably combined
     columnConfiguration: columns|json_encode,
     facetConfiguration: this.facetColumns|json_encode,
-    searchBuilderFields: searchBuilderFields|json_encode,
+    searchBuilderColumns: this.getSearchBuilderColumns|json_encode,
 
 
     modalTemplate: this.modalTemplate,

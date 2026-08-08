@@ -96,17 +96,6 @@ html[data-bs-theme=dark] div.DTS div.dataTables_scrollBody table {
 /* datatables.net-keytable-bs5 */
 /* No --bs- vars to override */
 
-/* datatables.net-searchpanes-bs5 */
-html[data-bs-theme=dark] div.dtsp-panesContainer button.btn-subtle {
-    border: var(--tblr-border-width) solid var(--tblr-border-color);
-}
-html[data-bs-theme=dark] div.dtsp-panesContainer div.dtsp-searchPane div.dt-container div.dt-scroll-body,
-html[data-bs-theme=dark] div.dtsp-panesContainer div.dtsp-searchPane div.dt-container div.dataTables_scrollBody,
-html[data-bs-theme=dark] div.dtsp-panesContainer div.dtsp-searchPane div.dataTables_wrapper div.dt-scroll-body,
-html[data-bs-theme=dark] div.dtsp-panesContainer div.dtsp-searchPane div.dataTables_wrapper div.dataTables_scrollBody {
-    background: var(--tblr-table-bg) !important;
-}
-
 /* Generated api-grid column sizing */
 table.dataTable th.dt-col-wrap,
 table.dataTable td.dt-col-wrap {
