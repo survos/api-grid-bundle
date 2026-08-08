@@ -20,7 +20,7 @@ use App\Service\SpreadsheetService;
 use Doctrine\ORM\EntityManagerInterface;
 use Meilisearch\Client;
 use Meilisearch\Contracts\DocumentsQuery;
-use Meilisearch\Endpoints\Indexes;
+use Meilisearch\Endpoints\Index;
 use Meilisearch\Exceptions\ApiException;
 use Psr\Http\Client\ClientInterface;
 use Psr\Log\LoggerInterface;
@@ -120,7 +120,7 @@ class MeiliService
         }
     }
 
-    public function waitForTask(array|string|int $taskId, ?Indexes $index = null, bool $stopOnError = true, mixed $dataToDump = null): array
+    public function waitForTask(array|string|int $taskId, ?Index $index = null, bool $stopOnError = true, mixed $dataToDump = null): array
     {
 
         if (is_array($taskId)) {
@@ -161,12 +161,12 @@ class MeiliService
     }
 
     /**
-     * @param \Meilisearch\Endpoints\Indexes $index
+     * @param \Meilisearch\Endpoints\Index $index
      * @param SymfonyStyle $io
      * @param string|null $indexName
      * @return array
      */
-    public function waitUntilFinished(Indexes $index, ?SymfonyStyle $io = null): array
+    public function waitUntilFinished(Index $index, ?SymfonyStyle $io = null): array
     {
         do {
             $index->fetchInfo();
@@ -202,7 +202,7 @@ class MeiliService
         return $client;
     }
 
-    public function getIndex(string $indexName, string $key = 'id', bool $autoCreate = true): ?Indexes
+    public function getIndex(string $indexName, string $key = 'id', bool $autoCreate = true): ?Index
     {
         $indexName = $this->getPrefixedIndexName($indexName);
         $this->loadExistingIndexes();
@@ -226,7 +226,7 @@ class MeiliService
         } while ($nextPage);
     }
 
-    public function getOrCreateIndex(string $indexName, string $key = 'id', bool $autoCreate = true): ?Indexes
+    public function getOrCreateIndex(string $indexName, string $key = 'id', bool $autoCreate = true): ?Index
     {
         $client = $this->getMeiliClient();
         try {
