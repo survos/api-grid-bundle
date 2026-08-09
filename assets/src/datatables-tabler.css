@@ -42,37 +42,13 @@ div.dt-button-info {
 /* datatables.net-responsive-bs5 */
 /* No --bs- vars to override */
 
-/* datatables.net-fixedheader-bs5 */
-table.dataTable.fixedHeader-floating,
-table.dataTable.fixedHeader-locked {
-    background-color: var(--tblr-body-bg);
-}
-
-div.dtfh-floatingparent-foot table {
-    border-top-color: var(--tblr-border-color);
-    border-top-width: var(--tblr-border-width);
-}
-
 /* datatables.net-rowgroup-bs5 */
 /* No --bs- vars to override */
 
-/* datatables.net-fixedcolumns-bs5 */
-table.dataTable thead tr > .dtfc-fixed-start,
-table.dataTable thead tr > .dtfc-fixed-end,
-table.dataTable tfoot tr > .dtfc-fixed-start,
-table.dataTable tfoot tr > .dtfc-fixed-end {
-    background-color: var(--tblr-table-bg);
-}
-table.dataTable tbody tr > .dtfc-fixed-start,
-table.dataTable tbody tr > .dtfc-fixed-end {
-    background-color: var(--tblr-table-bg);
-}
-
-div.dtfc-top-blocker,
-div.dtfc-bottom-blocker {
-    background-color: var(--tblr-body-bg);
-}
-
+/* dt-scroll-body/headInner/footInner: generic scrolling-container classes DataTables
+   applies whenever scrollX/scrollY is active (used via the scrollX Stimulus value,
+   not tied to any single plugin) -- keep even though the fixedcolumns/scroller
+   plugins these were originally grouped under are gone. */
 div.dt-scroll-body {
     border-left-color: var(--tblr-table-color) !important;
 }
@@ -82,16 +58,8 @@ div.dt-scroll-footInner table.table-bordered tr th:first-child {
     border-left-color: var(--tblr-border-color) !important;
 }
 
-/* datatables.net-colreorder-bs5 */
-/* No --bs- vars to override */
-
 /* datatables.net-rowreorder-bs5 */
 /* No --bs- vars to override */
-
-/* datatables.net-scroller-bs5 */
-html[data-bs-theme=dark] div.DTS div.dataTables_scrollBody table {
-    background-color: var(--tblr-body-bg);
-}
 
 /* datatables.net-keytable-bs5 */
 /* No --bs- vars to override */

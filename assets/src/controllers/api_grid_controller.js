@@ -10,22 +10,13 @@ import { installSymfonyTwigAPI } from "@tacman1123/twig-browser/adapters/symfony
 
 import DataTable from "datatables.net-bs5";
 import { dtPlugins } from "../datatables-plugins.js";
-// https://stackoverflow.com/questions/68084742/dropdown-doesnt-work-after-modal-of-bootstrap-imported
-// import bootstrap from 'bootstrap'; // bootstrap javascript
-// import * as bootstrap from 'bootstrap';
-
-// import Modal from 'bootstrap/js/dist/modal';
-// window.bootstrap = bootstrap;
-// DataTable.Responsive.bootstrap( bootstrap );
 
 import PerfectScrollbar from "perfect-scrollbar";
 
 import enLanguage from "datatables.net-plugins/i18n/en-GB.mjs";
 import esLanguage from "datatables.net-plugins/i18n/es-ES.mjs";
 import deLanguage from "datatables.net-plugins/i18n/de-DE.mjs";
-// import ukLanguage from 'datatables.net-plugins/i18n/uk.mjs';
-// import huLanguage from 'datatables.net-plugins/i18n/hu.mjs';
-// import hilanguage from 'datatables.net-plugins/i18n/hi.mjs';
+
 let Routing = null;
 try {
   const mod = await import("@survos/js-twig/generated/fos_routes.js");
@@ -39,13 +30,6 @@ try {
 if (!Routing) {
   console.error("[api-grid] js-twig routing is unavailable. Ensure @survos/js-twig/generated/fos_routes.js is in importmap.");
 }
-// global.Routing = Routing;
-
-// try {
-// } catch (e) {
-//     console.error(e);
-//     console.warn("FOS JS Routing not loaded, so path() won't work");
-// }
 
 const contentTypes = {
   PATCH: "application/merge-patch+json",
@@ -697,12 +681,7 @@ export default class extends Controller {
       // displayLength: 50, // not sure how to adjust the 'length' sent to the server
       // pageLength: 15,
       orderCellsTop: true,
-      fixedHeader: false,
-      //cascadePanes  : true,
       deferRender: true,
-      // scrollX:        true,
-      // scrollCollapse: true,
-      scroller: false,
       pageLength: this.pageLengthValue || 50,
       ...(initialOrder.length ? { order: initialOrder } : {}),
       // responsive: {
@@ -717,12 +696,6 @@ export default class extends Controller {
       //     }
       // },
 
-      // scroller: {
-      //     // rowHeight: 90, // @WARNING: Problematic!!
-      //     // displayBuffer: 10,
-      //     loadingIndicator: true,
-      // },
-      // "processing": true,
       serverSide: true, // use grid for client-side
 
       initComplete: (obj, data) => {
@@ -799,43 +772,6 @@ export default class extends Controller {
             },
           }
         : {}),
-      xxbuttons: (x) => {
-        // why isn't this being called?
-        console.error(x);
-        let buttons = [
-          "copy",
-          "csv",
-          "excel",
-          "pdf",
-          "print",
-          {
-            text: "labels",
-            action: (e, dt, node, config) => {
-              // window.open(Routing.generate('owner_labels', {
-              //     ownerId: 1,
-              //     pixieCode: pixie
-              // }))
-              console.log("open url, pass the params ", this.apiParams);
-              const event = new CustomEvent("changeSearchEvent", {
-                detail: this.apiParams,
-              });
-              window.dispatchEvent(event);
-            },
-          },
-        ];
-        console.error(this.buttons);
-        this.buttons.forEach((button, index) => {
-          buttons.push({
-            text: "x",
-            action: (e, dt, node, config) => {
-              // console.log(e, config);
-              // open url,maybe in new tab
-            },
-          });
-          console.log(button, index);
-        });
-        return buttons;
-      },
       columnDefs: this.columnDefs(),
       // https://datatables.net/reference/option/ajax
       ajax: (params, callback, settings) => {
@@ -1629,69 +1565,4 @@ title="${modal_route}"><i class="action-${action} bi bi-${icon}"></i></button>`;
     return null;
   }
 
-  initFooter(el) {
-    return;
-
-    let footer = el.querySelector("tfoot");
-    if (footer) {
-      return; // do not initiate twice
-    }
-
-    var handleInput = function (column) {
-      var input = $('<input class="form-control" type="text">');
-      input.attr("placeholder", column.filter.placeholder || column.data);
-      return input;
-    };
-
-    this.debug && console.log("adding footer");
-    footer = el.createTFoot();
-    footer.classList.add("show-footer-above");
-
-    var thead = el.querySelector("thead");
-    el.insertBefore(footer, thead);
-
-    // Create an empty <tr> element and add it to the first position of <tfoot>:
-    var row = footer.insertRow(0);
-
-    // Insert a new cell (<td>) at the first position of the "new" <tr> element:
-
-    // Add some bold text in the new cell:
-    //         cell.innerHTML = "<b>This is a table footer</b>";
-
-    this.columns().forEach((column, index) => {
-      var cell = row.insertCell(index);
-
-      // cell.innerHTML = column.data;
-
-      const input = document.createElement("input");
-      input.setAttribute("type", "text");
-      input.setAttribute("placeholder", column.data);
-      cell.appendChild(input);
-
-      // if (column.filter === true || column.filter.type === 'input') {
-      //         el = handleInput(column);
-      //     } else if (column.filter.type === 'select') {
-      //         el = handleSelect(column);
-      //     }
-
-      // var cell = row.insertCell(index);
-      // var td = $('<td>');
-      // if (column.filter !== undefined) {
-      //     var el;
-      //     if (column.filter === true || column.filter.type === 'input') {
-      //         el = handleInput(column);
-      //     } else if (column.filter.type === 'select') {
-      //         el = handleSelect(column);
-      //     }
-      //     that.handleFieldSearch(this.el, el, index);
-      //
-      //     td.append(el);
-    });
-    // footer = $('<tfoot>');
-    // footer.append(tr);
-    // console.log(footer);
-    // this.el.append(footer);
-
-    // see http://live.datatables.net/giharaka/1/edit for moving the footer to below the header
-  }
 }
