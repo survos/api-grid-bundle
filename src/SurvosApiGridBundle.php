@@ -7,7 +7,6 @@ use Survos\ApiGridBundle\Components\ItemGridComponent;
 use Survos\ApiGridBundle\Components\JsTwigComponent;
 use Survos\ApiGridBundle\Controller\AdminBrowseController;
 use Survos\ApiGridBundle\Controller\GridController;
-use Survos\ApiGridBundle\Controller\MeiliController;
 use Survos\ApiGridBundle\Filter\MeiliSearch\MultiFieldSearchFilter as MeiliMultiFieldSearchFilter;
 use Survos\ApiGridBundle\Components\ApiGridComponent;
 use Survos\ApiGridBundle\Service\DatatableService;
@@ -84,19 +83,6 @@ class SurvosApiGridBundle extends AbstractUxBundle
             ->setAutowired(true)
             ->setPublic(true)
         ;
-
-        // meili index stats, etc.
-        if ($meiliAvailable) {
-            $builder->autowire(MeiliController::class)
-                ->addTag('container.service_subscriber')
-                ->addTag('controller.service_arguments')
-                ->setArgument('$meili', new Reference('api_meili_service'))
-                ->setArgument('$chartBuilder', new Reference('chartjs.builder', ContainerInterface::NULL_ON_INVALID_REFERENCE))
-                ->setAutoconfigured(true)
-                ->setAutowired(true)
-                ->setPublic(true)
-            ;
-        }
 
         if (class_exists(Environment::class)) {
             $builder
