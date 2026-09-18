@@ -72,7 +72,8 @@ class DatatableService
                     $c['twigTemplate'] = $customColumnTemplates[$fixDotColumnName];
                 }
                 assert(is_array($c));
-                unset($c['propertyConfig']);
+                // Identifier and renderer metadata are not Column constructor options.
+                unset($c['propertyConfig'], $c['is_primary'], $c['renderType']);
 //            dd($c);
 
                 $column = new Column(...$c);

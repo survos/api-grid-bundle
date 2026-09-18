@@ -127,14 +127,13 @@ class SurvosApiGridBundle extends AbstractUxBundle
                 ->setArgument('$meili', new Reference('api_meili_service'))
                 ->setArgument('$httpClient', new Reference('httplug.http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE))
                 ->setArgument('$denormalizer', new Reference('serializer'))
+                ->addTag('api_platform.state_provider')
                 ->setAutowired(true)
                 ->setPublic(true)
             ;
-            // Only intercept all API Platform collections when explicitly opted in.
-            // Default false: set provider: MeiliSearchStateProvider::class on individual operations.
-            if ($config['meili_provider']) {
-                $providerDef->addTag('api_platform.state_provider');
-            }
+            // The tag makes explicit operation provider references resolvable by API
+            // Platform's locator. It does not replace the default Doctrine provider.
+
         }
 
 
@@ -194,7 +193,7 @@ class SurvosApiGridBundle extends AbstractUxBundle
             ->scalarNode('meiliKey')->defaultValue('%env(MEILI_API_KEY)%')->end()
             ->scalarNode('meiliPrefix')->defaultValue('%env(MEILI_PREFIX)%')->end()
             ->booleanNode('meili_provider')->defaultValue(false)
-                ->info('Register MeiliSearchStateProvider as a global api_platform.state_provider. Only enable when Meili is configured and entities should be served from it.')
+                ->info('Legacy option retained for configuration compatibility. Explicit operation providers are always registered; Doctrine remains the default.')
             ->end()
             ->booleanNode('passLocale')->defaultValue(false)->end()
             ->integerNode('maxValuesPerFacet')
