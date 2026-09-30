@@ -1,102 +1,99 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Survos\ApiGridBundle\Api\Filter;
 
-use ApiPlatform\Metadata\FilterInterface;
-use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
+use ApiPlatform\Doctrine\Orm\Filter\FilterInterface;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
-use ApiPlatform\Exception\InvalidArgumentException;
 
 /**
- * Selects entities where each search term is found somewhere
- * in at least one of the specified properties.
- * Search terms must be separated by spaces.
- * Search is case-insensitive.
- * All specified properties type must be string.
- * @package App\Filter
+ * The grid's facet (search pane) filter: `facet_filter[]=<field>,<operator>,<value>|<value>`.
+ * Each entry keeps the rows whose field is one of the values; an empty value list means
+ * "is null". Fields that are not declared, or that are not a plain column
+ * or to-one association of the entity, are ignored.
+ *
+ * Declare it as a query parameter:
+ *
+ *     'facet_filter' => new QueryParameter(filter: new FacetsFieldSearchFilter(), properties: ['marking', 'host'])
+ *
+ * The older `#[ApiFilter(FacetsFieldSearchFilter::class, properties: [...])]` form still works.
  */
-class FacetsFieldSearchFilter extends AbstractFilter implements FilterInterface
+class FacetsFieldSearchFilter implements FilterInterface
 {
-    /**
-     * Add configuration parameter
-     * {@inheritdoc}
-     * @param string $searchParameterName The parameter whose value this filter searches for
-     */
-    public function __construct(ManagerRegistry        $managerRegistry,
+    use QueryParameterOrLegacyTrait;
+
+    public function __construct(
+        private readonly ?ManagerRegistry $managerRegistry = null,
         ?LoggerInterface $logger = null,
-        ?array $properties = null,
+        private readonly ?array $properties = null,
         ?NameConverterInterface $nameConverter = null,
-        private string         $searchParameterName = 'facet_filter')
-    {
-        parent::__construct($managerRegistry, $logger, $properties, $nameConverter);
+        private readonly string $searchParameterName = 'facet_filter',
+    ) {
     }
 
-
-    /** {@inheritdoc} */
-    protected function filterProperty(
-        string $property,
-        $value,
-        QueryBuilder $queryBuilder,
-        QueryNameGeneratorInterface $queryNameGenerator,
-        string $resourceClass,
-        ?Operation $operation = null,
-        array $context = []
-    ): void {
-        if (null === $value || $property !== $this->searchParameterName) {
+    public function apply(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $resourceClass, ?Operation $operation = null, array $context = []): void
+    {
+        $value = $this->requestedValue($context);
+        if (null === $value || '' === $value) {
             return;
         }
 
-        foreach ($value as $filter) {
-            $words = explode(',', $filter);
-            if(count($words) < 3) {
-                return;
-            }
-            $key = $words[0];
-            $values = $words[2]??'';
+        $allowed = $this->declaredProperties($context);
+        $metadata = $queryBuilder->getEntityManager()->getClassMetadata($resourceClass);
+        $alias = $queryBuilder->getRootAliases()[0];
 
-            if (strlen($values)) {
-                $filterValue = explode('|', $words[2]);
-            } else {
-                $filterValue[0] = null;
+        foreach ((array) $value as $facet) {
+            $parts = explode(',', (string) $facet, 3);
+            if (3 !== \count($parts)) {
+                continue;
             }
-            if (in_array($key, $this->properties)) {
-                $this->addWhereIn($queryBuilder, $filterValue, $key);
+            [$field, , $values] = $parts;
+            if (!\in_array($field, $allowed, true) || !$this->isComparable($metadata, $field)) {
+                continue;
             }
+
+            if ('' === $values) {
+                $queryBuilder->andWhere($queryBuilder->expr()->isNull($alias.'.'.$field));
+                continue;
+            }
+            $parameterName = $queryNameGenerator->generateParameterName($field);
+            $queryBuilder
+                ->andWhere($queryBuilder->expr()->in($alias.'.'.$field, ':'.$parameterName))
+                ->setParameter($parameterName, explode('|', $values));
         }
-        return;
     }
 
-    private function addWhereIn(QueryBuilder $queryBuilder, array $word, string $parameterName) {
-        $alias = $queryBuilder->getRootAliases()[0];
-        if (count($word) && ($word[0] === null)) {
-            $queryBuilder
-                ->andWhere($queryBuilder->expr()->isNull(sprintf('%s.%s', $alias, $parameterName)));
-        } else {
-            $queryBuilder
-                ->andWhere($queryBuilder->expr()->in(sprintf('%s.%s', $alias, $parameterName),$word));
+    /** A mapped scalar column or a to-one association: something `IN (...)` can be applied to. */
+    private function isComparable(ClassMetadata $metadata, string $field): bool
+    {
+        if ($metadata->hasAssociation($field)) {
+            return $metadata->isSingleValuedAssociation($field);
         }
+
+        return $metadata->hasField($field) && !\in_array($metadata->getTypeOfField($field), ['json', 'array', 'simple_array'], true);
     }
 
     public function getDescription(string $resourceClass): array
     {
-        //        assert(false, $resourceClass);
-        $props = $this->getProperties();
-        if (null === $props) {
-            throw new \InvalidArgumentException('Properties must be specified');
+        if (null === $this->properties) {
+            return [];
         }
+
         return [
             $this->searchParameterName => [
-                'property' => implode(', ', array_keys($props)),
+                'property' => implode(', ', self::propertyNames($this->properties)),
                 'type' => 'string',
                 'is_collection' => true,
                 'required' => false,
                 'openapi' => [
-                    'description' => 'Selects entities where each search term is found somewhere in at least one of the specified properties',
+                    'description' => 'Facet filter, one entry per field: <field>,<operator>,<value>|<value>',
                 ],
             ],
         ];

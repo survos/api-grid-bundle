@@ -6,8 +6,16 @@ namespace Survos\ApiGridBundle\Service;
 
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiProperty;
+use ApiPlatform\Doctrine\Orm\Filter\EndSearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\ExactFilter;
+use ApiPlatform\Doctrine\Orm\Filter\FreeTextQueryFilter;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Doctrine\Orm\Filter\PartialSearchFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SortFilter;
+use ApiPlatform\Doctrine\Orm\Filter\StartSearchFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Parameter;
 use Doctrine\ORM\Mapping\Id;
 use Survos\ApiGridBundle\Api\Filter\FacetsFieldSearchFilter;
 use Survos\ApiGridBundle\Api\Filter\LikePatternSearchFilter;
@@ -178,6 +186,39 @@ class DatatableService
             }
         }
 
+        // ── Layer 2b: QueryParameter filters, the replacement for #[ApiFilter] ───
+        foreach ($this->declaredParameters($rc) as $key => $parameter) {
+            $filter = $parameter->getFilter();
+            if (null === $filter) {
+                continue;
+            }
+            $filterClass = \is_object($filter) ? $filter::class : (string) $filter;
+            // 'marking' filters marking; 'order[:property]' with properties filters each of them;
+            // 'host' with property: 'media.host' is how the 'host' column is filtered.
+            $properties = $parameter->getProperties() ?? array_unique(array_filter([(string) $key, $parameter->getProperty()]));
+            foreach ($properties as $property) {
+                if (str_contains($property, ':') || str_contains($property, '[')) {
+                    continue;
+                }
+                $settings[$property] ??= ['name' => $property];
+                match (true) {
+                    is_a($filterClass, SortFilter::class, true),
+                    is_a($filterClass, OrderFilter::class, true)             => $settings[$property]['sortable']   = true,
+                    is_a($filterClass, FacetsFieldSearchFilter::class, true),
+                    str_ends_with($filterClass, '\\FacetsFieldSearchFilter') => $settings[$property]['browsable']  = true,
+                    is_a($filterClass, ExactFilter::class, true),
+                    is_a($filterClass, PartialSearchFilter::class, true),
+                    is_a($filterClass, StartSearchFilter::class, true),
+                    is_a($filterClass, EndSearchFilter::class, true),
+                    is_a($filterClass, FreeTextQueryFilter::class, true),
+                    is_a($filterClass, SearchFilter::class, true),
+                    is_a($filterClass, LikePatternSearchFilter::class, true),
+                    is_a($filterClass, MultiFieldSearchFilter::class, true)  => $settings[$property]['searchable'] = true,
+                    default                                                  => null,
+                };
+            }
+        }
+
         // ── Layer 3: property-level identifier attributes ─
         foreach ($rc->getProperties() as $property) {
             $name = $property->getName();
@@ -193,6 +234,33 @@ class DatatableService
         }
 
         return $settings;
+    }
+
+    /**
+     * The parameters declared on the class's #[ApiResource] attributes and on their operations.
+     *
+     * @return iterable<string, Parameter>
+     */
+    private function declaredParameters(\ReflectionClass $rc): iterable
+    {
+        foreach ($rc->getAttributes(ApiResource::class) as $attribute) {
+            /** @var ApiResource $resource */
+            $resource = $attribute->newInstance();
+            yield from $this->parametersOf($resource->getParameters());
+            foreach ($resource->getOperations() ?? [] as $operation) {
+                yield from $this->parametersOf($operation->getParameters());
+            }
+        }
+    }
+
+    /** @return iterable<string, Parameter> */
+    private function parametersOf(iterable|null $parameters): iterable
+    {
+        foreach ($parameters ?? [] as $key => $parameter) {
+            if ($parameter instanceof Parameter) {
+                yield (string) ($parameter->getKey() ?? $key) => $parameter;
+            }
+        }
     }
 
     private function isNaturallySortable(string $type): bool
