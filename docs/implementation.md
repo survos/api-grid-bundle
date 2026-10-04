@@ -56,7 +56,7 @@ Custom rendering:
 
 - column `twigTemplate` strings are compiled by the twig-browser engine
 - the render function receives `row`, `data`, `column`, `globals`, `field_name`
-- `path()` is provided via `@survos/js-twig/generated/fos_routes.js` (FOS JS Routing)
+- `path()` is provided via `@survos/js-twig/routing` (js-twig-bundle; cache-warmed JSON, no app importmap entry)
 
 ### Pagination and collection normalization
 

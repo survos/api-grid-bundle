@@ -1,8 +1,8 @@
 # Survos API Grid Bundle
 
-A Symfony bundle that renders a server-driven [DataTables 3.0](https://datatables.net/) grid from an API Platform collection endpoint, using Twig Components and a Stimulus controller.
+A Symfony bundle that renders a server-driven DataTables 3 table from an API Platform collection endpoint, using Twig Components and Stimulus.
 
-> **Beta notice** — This bundle ships with DataTables 3.0 beta packages (`datatables.net-bs5 3.0.0-beta.2` and related extensions). Beta users get active upstream support from the DataTables team, which means faster bug fixes and direct access to new features.
+API Grid now requires `survos/grid-bundle` and extends its `GridController`. Grid owns DataTables core (currently 3.1.3), the Bootstrap 5 / Tabler styling, extension pins, initialization and teardown. API Grid owns the API Platform requests, server-side pagination, facets, filters, selection actions and browser-side Twig rendering. Both render HTML tables; choose base Grid for in-memory rows or a single JSON fetch.
 
 Key features:
 
@@ -15,10 +15,10 @@ Key features:
 
 ## Requirements
 
-- PHP 8.4+
-- Symfony 7.4 or 8.0
-- API Platform 4.1+
-- `survos/field-bundle` (optional but recommended for attribute-driven config)
+- PHP 8.5+
+- Symfony 8.1+ for the shared Grid dependency
+- API Platform 4.1+ or 5.x
+- `survos/grid-bundle` and `survos/field-bundle` (installed as dependencies)
 
 ## Install
 
@@ -26,11 +26,32 @@ Key features:
 composer req survos/api-grid-bundle
 ```
 
-Assets are registered via Symfony UX. Add the Stimulus controller to your `importmap.php`:
+Assets are registered via Symfony UX and AssetMapper. The canonical package names are `@survos/api-grid-bundle` and `@survos/grid-bundle`; remove obsolete application overrides using `@survos/api-grid` or `@survos/grid`. Do not run `importmap:require @survos/api-grid`.
 
-```bash
-php bin/console importmap:require @survos/api-grid
+```json
+{
+  "controllers": {
+    "@survos/api-grid-bundle": {
+      "api-grid": {"enabled": true, "fetch": "lazy", "autoimport": {}}
+    },
+    "@survos/grid-bundle": {
+      "grid": {"enabled": true, "fetch": "lazy", "autoimport": {}}
+    }
+  }
+}
 ```
+
+Run `php bin/console importmap:install` after upgrading and clear the application cache. DataTables pins come from Grid's `symfony.importmap` manifest. Reconcile stale application pins with that manifest; changing npm `dependencies` alone does not update Flex importmaps.
+
+Core CSS is imported by the controller. Extensions and their CSS load only when the selected grid features require them. Remove old global DataTables CSS autoimports from application controller configuration. Detail dialogs reuse `window.bootstrap` when supplied by the host or import `Modal` / `Offcanvas` from the host's `@tabler/core`; Tabler does not create that global itself.
+
+The unqualified `<twig:item_grid>` component now belongs to Grid. Use `<twig:api_item_grid>` for API Grid's legacy recursive detail component. API Grid retains its richer `Column` metadata and API-specific components.
+
+## Verification status
+
+The shared base is exercised by Showcase's `/browse` page over 23 `Site` entities. Search, sorting, pagination, page-size changes and navigation away/back passed locally on October 4, 2026. That page uses `<twig:grid>` and does not prove API-backed behavior. Tree-demo's `/playground/topics` provides Grid and Grid + Responsive comparisons; its existing `/topic/index` is the API Grid follow-up target.
+
+The shared PHP suite passes 10 tests / 116 assertions, and the JavaScript suite passes six tests covering lazy assets, disconnect/reconnect and API controller inheritance. Live API pagination, facets and detail dialogs still need application smoke tests after publication. See Grid's `docs/testing.md` and `docs/upgrading.md` in the mono repository for the full checks and migration notes.
 
 ## Quick Start
 
@@ -222,7 +243,7 @@ col(
     visible: true,        {# show column by default (false = hidden, toggleable) #}
     width: '10rem',       {# CSS width hint #}
     widget: 'range',      {# widget hint: text | select | range | date | boolean #}
-    route: 'app_video_show',      {# wrap cell value in <a href="..."> using FOS JS Routing #}
+    route: 'app_video_show',      {# wrap cell value in <a href="..."> using js-twig browser routing #}
     responsivePriority: 1,        {# DataTables responsive priority (lower = higher priority) #}
     titleAttr: 'Tooltip text',    {# HTML title attribute on the <th> #}
     order: 10,            {# display order within the column list #}

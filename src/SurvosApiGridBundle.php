@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Survos\ApiGridBundle;
 
 use Survos\ApiGridBundle\Api\Filter\FacetsFieldSearchFilter;
@@ -13,6 +15,8 @@ use Survos\ApiGridBundle\Service\DatatableService;
 use Survos\ApiGridBundle\Service\MeiliService;
 use Survos\ApiGridBundle\Twig\TwigExtension;
 use Survos\Kit\AbstractUxBundle;
+use Survos\Grid\SurvosGridBundle;
+use Symfony\Component\DependencyInjection\Kernel\RequiredBundle;
 use Survos\Kit\Traits\HasConfigurableRoutes;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -31,12 +35,16 @@ use Survos\ApiGridBundle\Hydra\Serializer\DataTableCollectionNormalizer;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_iterator;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_locator;
 
+#[RequiredBundle(SurvosGridBundle::class)]
 // Symfony\Component\HttpKernel\Bundle\Bundle <-- Flex auto-registration marker (see Survos\Kit\AbstractSurvosBundle)
 class SurvosApiGridBundle extends AbstractUxBundle
 {
     use HasConfigurableRoutes;
 
-    public const ASSET_PACKAGE = 'api-grid';
+    protected function assetNamespace(): ?string
+    {
+        return '';
+    }
 
     // $config is the bundle Configuration that you usually process in ExtensionInterface::load() but already merged and processed
     /**
@@ -186,8 +194,8 @@ class SurvosApiGridBundle extends AbstractUxBundle
 
         $children
             ->scalarNode('stimulus_controller')
-                ->info('The stimulus controller to use, should extend @survos/api-grid/api-grid')
-                ->defaultValue('@survos/api-grid/api-grid')
+                ->info('The stimulus controller to use, should extend survos--api-grid-bundle--api-grid')
+                ->defaultValue('survos--api-grid-bundle--api-grid')
             ->end()
             ->scalarNode('meiliHost')->defaultValue('%env(MEILI_SERVER)%')->end()
             ->scalarNode('meiliKey')->defaultValue('%env(MEILI_API_KEY)%')->end()

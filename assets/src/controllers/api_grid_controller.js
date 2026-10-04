@@ -2,24 +2,16 @@
 
 // during dev, from project_dir run
 // ln -s ~/survos/bundles/api-grid-bundle/assets/src/controllers/sandbox_api_controller.js assets/controllers/sandbox_api_controller.js
-import { Controller } from "@hotwired/stimulus";
+import { GridController } from "@survos/grid-bundle/src/controllers/grid_controller.js";
+import "../datatables-tabler.css";
 import { createEngine } from "@tacman1123/twig-browser";
 import { installSymfonyTwigAPI } from "@tacman1123/twig-browser/adapters/symfony";
 
 
 
-import DataTable from "datatables.net-bs5";
-import { dtPlugins } from "../datatables-plugins.js";
-
-import PerfectScrollbar from "perfect-scrollbar";
-
-import enLanguage from "datatables.net-plugins/i18n/en-GB.mjs";
-import esLanguage from "datatables.net-plugins/i18n/es-ES.mjs";
-import deLanguage from "datatables.net-plugins/i18n/de-DE.mjs";
-
 let Routing = null;
 try {
-  const mod = await import("@survos/js-twig/generated/fos_routes.js");
+  const mod = await import("@survos/js-twig/routing");
   if (typeof mod.path === "function") {
     Routing = { generate: mod.path };
   }
@@ -28,7 +20,7 @@ try {
 }
 
 if (!Routing) {
-  console.error("[api-grid] js-twig routing is unavailable. Ensure @survos/js-twig/generated/fos_routes.js is in importmap.");
+  console.error("[api-grid] js-twig routing is unavailable. Run cache:warmup and check var/js_twig_bundle/generated/routes.json; no routing importmap entry is needed.");
 }
 
 const contentTypes = {
@@ -36,29 +28,8 @@ const contentTypes = {
   POST: "application/json",
 };
 
-if (DataTable.ColumnControl?.content) {
-  DataTable.ColumnControl.content.numberRange = {
-    defaults: {
-      columnName: null,
-    },
-
-    init: function (config) {
-      const wrapper = document.createElement("div");
-      wrapper.className = "dtcc-number-range d-flex gap-1";
-      wrapper.dataset.columnName = config.columnName;
-
-      wrapper.innerHTML = `
-        <input type="number" class="form-control form-control-sm dtcc-range-min" placeholder="Min" style="min-width: 72px;">
-        <input type="number" class="form-control form-control-sm dtcc-range-max" placeholder="Max" style="min-width: 72px;">
-      `;
-
-      return wrapper;
-    },
-  };
-}
-
-// /* stimulusFetch: 'lazy' */
-export default class extends Controller {
+/* stimulusFetch: 'lazy' */
+export default class extends GridController {
   static targets = ["table", "modal", "modalBody", "fieldSearch", "message", "offcanvas", "offcanvasBody", "offcanvasTitle"];
   static values = {
     apiCall: { type: String, default: "" },
@@ -98,7 +69,7 @@ export default class extends Controller {
       }
 
       dt.draw();
-    });
+    }, { signal: this.connection.signal });
   }
 
   cols() {
@@ -276,8 +247,8 @@ export default class extends Controller {
     form.submit();
   }
 
-  connect() {
-    super.connect(); //
+  async connect() {
+    const signal = this.beginConnection();
 
     this.apiParams = {}; // initialize
     const event = new CustomEvent("changeFormUrlEvent", {
@@ -304,10 +275,6 @@ export default class extends Controller {
     // "compile" the custom twig blocks
     // var columnRender = [];
     this.layout = this._parseLayout(this.layoutValue);
-
-    if (!this.layout) {
-      this.layout = this.defaultLayout();
-    }
 
     this.filter = JSON.parse(this.filterValue || "[]");
     // console.error(this.buttonsValue);
@@ -378,17 +345,78 @@ export default class extends Controller {
     //     console.error('A table element is required.');
     // }
     if (this.tableElement) {
+      await this.prepareTableAssets(this.requiredExtensions(), this.localeValue);
+      if (this.hasModalTarget || this.hasOffcanvasTarget) {
+        // Tabler owns Bootstrap. Reuse its exports without adding standalone Bootstrap pins.
+        this.bootstrap = window.bootstrap;
+        if (!this.bootstrap) {
+          const tablerModule = "@tabler/core";
+          try { this.bootstrap = await import(tablerModule); }
+          catch { console.warn("[api-grid] Detail dialogs require @tabler/core in the host importmap."); }
+        }
+      }
+      if (signal.aborted) return;
+      this.registerColumnControl();
       this.dt = this.initDataTable(this.tableElement, []);
       this.initialized = true;
     }
   }
 
+  disconnect() {
+    this.columnControlObserver?.disconnect();
+    this.columnControlObserver = null;
+    this.initialized = false;
+    super.disconnect();
+  }
+
+  requiredExtensions() {
+    const extensions = new Set(this.extensionsValue);
+    if (!this.scrollXValue) extensions.add("responsive");
+    if (this.selectValue) extensions.add("select");
+    if (this.columnControlValue) extensions.add("columnControl");
+    if (this.searchBuilderValue || this.searchBuilderColumns.length) extensions.add("searchBuilder");
+    if (this.buttons.length || this.buildBulkActionButtons().length) extensions.add("buttons");
+    // Custom layouts can request plugin features even without their own option flag.
+    const visit = (value) => {
+      if (typeof value === "string" && ["buttons", "searchBuilder"].includes(value)) extensions.add(value);
+      else if (Array.isArray(value)) value.forEach(visit);
+      else if (value && typeof value === "object") {
+        for (const [key, item] of Object.entries(value)) { visit(key); visit(item); }
+      }
+    };
+    visit(this.layout);
+    return [...extensions];
+  }
+
+  registerColumnControl() {
+    if (this.DataTable.ColumnControl?.content) {
+      this.DataTable.ColumnControl.content.numberRange = {
+        defaults: {
+          columnName: null,
+        },
+
+        init: function (config) {
+          const wrapper = document.createElement("div");
+          wrapper.className = "dtcc-number-range d-flex gap-1";
+          wrapper.dataset.columnName = config.columnName;
+
+          wrapper.innerHTML = `
+            <input type="number" class="form-control form-control-sm dtcc-range-min" placeholder="Min" style="min-width: 72px;">
+            <input type="number" class="form-control form-control-sm dtcc-range-max" placeholder="Max" style="min-width: 72px;">
+          `;
+
+          return wrapper;
+        },
+      };
+    }
+  }
+
   #getOrCreateModal(target) {
-    if (!window.bootstrap?.Modal) {
+    if (!this.bootstrap?.Modal) {
       console.error("[api-grid] Bootstrap Modal is not available.");
       return null;
     }
-    return window.bootstrap.Modal.getOrCreateInstance(target);
+    return this.bootstrap.Modal.getOrCreateInstance(target);
   }
 
   openModal(e) {
@@ -622,24 +650,10 @@ export default class extends Controller {
       apiPlatformHeaders["X-LOCALE"] = this.locale;
     }
 
-    let language = enLanguage;
-    if (this.locale === "en") {
-      language = enLanguage;
-    } else if (this.locale === "es") {
-      language = esLanguage;
-    } else if (this.locale === "de") {
-      language = deLanguage;
-
-      // }else if(this.locale == 'uk') {
-      //     language = ukLanguage;
-      // }else if(this.locale == 'hu') {
-      //     language = huLanguage;
-      // }else if(this.locale == 'hi') {
-      //     language = hilanguage;
-    }
+    const language = this.language;
 
     const modalTemplateName = "modal:responsive";
-    var modalRenderer = DataTable.Responsive.renderer.tableAll({
+    var modalRenderer = this.DataTable.Responsive?.renderer.tableAll({
       tableClass: "ui table",
     });
     if (this.modalTemplateValue) {
@@ -672,6 +686,7 @@ export default class extends Controller {
     const layout = this.normalizedLayout() || this.defaultLayout();
 
     let setup = {
+      ...this.optionsValue,
       // let dt = new DataTable(el, {
 
       language: language,
@@ -807,7 +822,7 @@ export default class extends Controller {
         }
         let request = fetch(
           requestUrl.toString(),
-          { headers: apiPlatformHeaders }
+          { headers: apiPlatformHeaders, signal: this.connection.signal }
         )
           .then((response) => response.json())
           .then((hydraData) => {
@@ -855,6 +870,7 @@ export default class extends Controller {
             });
           })
           .catch((error) => {
+            if (error.name === "AbortError") return;
             console.error(error, error?.request);
             let url =
               error?.request?.responseURL ||
@@ -875,7 +891,7 @@ export default class extends Controller {
       setup.ordering = { indicators: false, handler: false };
     }
 
-    let dt = new DataTable(el, setup);
+    let dt = this.createTable(el, setup);
 
     if (this.columns.some(c => c.group)) {
       this.prependGroupHeaderRow(dt);
@@ -911,7 +927,7 @@ export default class extends Controller {
 
   defaultLayout() {
     return {
-      topStart: ['buttons', 'pageLength'],
+      topStart: [...((this.buttons?.length || this.buildBulkActionButtons().length) ? ['buttons'] : []), 'pageLength'],
       topEnd: 'search',
       bottomStart: 'info',
       bottomEnd: 'paging',
@@ -919,7 +935,7 @@ export default class extends Controller {
   }
 
   hasColumnControlPlugin() {
-    return !!dtPlugins.columnControl;
+    return !!this.DataTable.ColumnControl;
   }
 
   normalizedLayout() {
@@ -929,9 +945,6 @@ export default class extends Controller {
       }
       if (value === "columnControl" && !this.hasColumnControlPlugin()) {
         return "search";
-      }
-      if (value === "searchBuilder" && !this.searchBuilderValue) {
-        return null;
       }
       return value;
     };
@@ -1154,12 +1167,12 @@ export default class extends Controller {
       this.offcanvasBodyTarget.innerHTML = '<div class="text-center p-4"><div class="spinner-border"></div></div>';
     }
 
-    if (!window.bootstrap?.Offcanvas) {
+    if (!this.bootstrap?.Offcanvas) {
       console.error("[api-grid] Bootstrap Offcanvas is not available.");
       return;
     }
 
-    const bsOffcanvas = window.bootstrap.Offcanvas.getOrCreateInstance(this.offcanvasTarget);
+    const bsOffcanvas = this.bootstrap.Offcanvas.getOrCreateInstance(this.offcanvasTarget);
     bsOffcanvas.show();
     fetch(url)
       .then(r => r.text())
@@ -1181,6 +1194,7 @@ export default class extends Controller {
     // so closest('.dt-container') from the table returns null. Observe the common parent.
     const root = tableEl.parentElement?.querySelector('.dt-container') ?? tableEl.parentElement ?? tableEl;
     observer.observe(root, { childList: true, subtree: true });
+    this.columnControlObserver = observer;
   }
 
   columnControlConfig() {

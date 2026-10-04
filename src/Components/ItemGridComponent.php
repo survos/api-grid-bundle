@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Survos\ApiGridBundle\Components;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
@@ -9,7 +11,7 @@ use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 use Symfony\UX\TwigComponent\Attribute\PostMount;
 use Symfony\UX\TwigComponent\Attribute\PreMount;
 
-#[AsTwigComponent('item_grid', template: '@SurvosApiGrid/components/item.html.twig')]
+#[AsTwigComponent('api_item_grid', template: '@SurvosApiGrid/components/item.html.twig')]
 class ItemGridComponent
 {
     public function __construct()
@@ -20,7 +22,7 @@ class ItemGridComponent
 
     public array $columns;
 
-    public ?string $stimulusController = '@survos/api-grid/item_grid';
+    public ?string $stimulusController = null;
 
     #[PreMount]
     public function preMount(array $parameters = []): array

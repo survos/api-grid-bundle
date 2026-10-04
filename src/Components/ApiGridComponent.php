@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Survos\ApiGridBundle\Components;
 
 use Psr\Log\LoggerInterface;
@@ -50,6 +52,8 @@ class ApiGridComponent implements TwigBlocksInterface
     public iterable $data;
 
     public array $columns = [];
+    public array $extensions = [];
+    public array $options = [];
     public array $facet_columns = []; // the facet columns, rendered in the sidebar
     public array $globals = [];
     public array $searchBuilderFields = [];

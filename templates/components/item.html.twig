@@ -24,9 +24,9 @@
                             {% if value|array_is_list %}
                                 {% for v in value %}
                                     {% if v is iterable %}
-                                    <twig:item_grid :data="v">
+                                    <twig:api_item_grid :data="v">
 
-                                    </twig:item_grid>
+                                    </twig:api_item_grid>
                                     {% else %}
                                         <b>{{ v }}</b>
                                     {% endif %}
@@ -34,9 +34,9 @@
 
 {#                                {{ value|join('|') }}#}
                             {% else %}
-                                <twig:item_grid :data="value">
+                                <twig:api_item_grid :data="value">
 
-                                </twig:item_grid>
+                                </twig:api_item_grid>
                             {% endif %}
                         {% else %}
                             {{ value }}
