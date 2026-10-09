@@ -11,7 +11,7 @@ import { installSymfonyTwigAPI } from "@tacman1123/twig-browser/adapters/symfony
 
 let Routing = null;
 try {
-  const mod = await import("@survos/js-twig/routing");
+  const mod = await import("@survos/js-twig-bundle/routing");
   if (typeof mod.path === "function") {
     Routing = { generate: mod.path };
   }
