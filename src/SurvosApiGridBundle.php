@@ -6,7 +6,6 @@ namespace Survos\ApiGridBundle;
 
 use Survos\ApiGridBundle\Api\Filter\FacetsFieldSearchFilter;
 use Survos\ApiGridBundle\Components\ItemGridComponent;
-use Survos\ApiGridBundle\Components\JsTwigComponent;
 use Survos\ApiGridBundle\Controller\AdminBrowseController;
 use Survos\ApiGridBundle\Controller\GridController;
 use Survos\ApiGridBundle\Filter\MeiliSearch\MultiFieldSearchFilter as MeiliMultiFieldSearchFilter;
@@ -101,11 +100,6 @@ class SurvosApiGridBundle extends AbstractUxBundle
         }
 
         $builder->register(ItemGridComponent::class)
-            ->setAutowired(true)
-            ->setAutoconfigured(true)
-        ;
-
-        $builder->register(JsTwigComponent::class)
             ->setAutowired(true)
             ->setAutoconfigured(true)
         ;
