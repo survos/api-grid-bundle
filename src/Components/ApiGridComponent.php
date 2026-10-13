@@ -23,7 +23,7 @@ class ApiGridComponent implements TwigBlocksInterface
         private LoggerInterface $logger,
         private RequestStack $requestStack,
         private DatatableService $datatableService,
-        public ?string $stimulusController=null,
+        public ?string $stimulusController = null,
         private ?string $class = null,
         private array $filter = [],
     ) {
@@ -40,12 +40,14 @@ class ApiGridComponent implements TwigBlocksInterface
         if ($stack = $this->requestStack->getCurrentRequest()) {
             $this->filter = array_merge($this->filter, $stack->query->all());
         }
+
         return $this->filter;
     }
 
     public function setClass(?string $class): self
     {
         $this->class = $class;
+
         return $this;
     }
 
@@ -61,16 +63,16 @@ class ApiGridComponent implements TwigBlocksInterface
     public string|TemplateWrapper|null $caller = null;
     public array|object|null $schema = null;
 
-//    public ?string $class = null;
+    //    public ?string $class = null;
     public string|array|null $layout = null;
-    public int $pageLength=50;
-    public ?string $apiGetCollectionUrl=null;
+    public int $pageLength = 50;
+    public ?string $apiGetCollectionUrl = null;
     public ?string $apiRoute = null;
     public array $apiRouteParams = [];
-    public array  $apiGetCollectionParams = [];
+    public array $apiGetCollectionParams = [];
     public bool $trans = true;
     public string|bool|null $domain = null;
-    public array $buttons=[]; // for now, simply a keyed list of urls to open
+    public array $buttons = []; // for now, simply a keyed list of urls to open
 
     /** Enable DataTables Select extension — prepends a checkbox column, multi-select. */
     public bool $select = false;
@@ -104,7 +106,7 @@ class ApiGridComponent implements TwigBlocksInterface
     public string $scrollY = '70vh';
     /** Horizontal scroll instead of responsive column hiding. Mutually exclusive with responsive. */
     public bool $scrollX = false;
-//    public array $filter = [];
+    //    public array $filter = [];
     public bool $useDatatables = true;
 
     public ?string $source = null;
@@ -122,7 +124,6 @@ class ApiGridComponent implements TwigBlocksInterface
     public bool $searchBuilder = false;
     public bool $globalSearch = false;
 
-
     public function getLocale(): string
     {
         return $this->requestStack->getParentRequest()->getLocale();
@@ -138,24 +139,24 @@ class ApiGridComponent implements TwigBlocksInterface
     }
 
     /**
-     * @param string $columnType
      * @return Column[]
      */
-    public function getNormalizedColumns(string $columnType='columns'): iterable
+    public function getNormalizedColumns(string $columnType = 'columns'): iterable
     {
         // Settings are inferred from PHP attributes and FieldBundle descriptors.
 
         $settings = $this->getDefaultColumns();
         if (!$this->columns) {
             $this->columns = array_values(array_map(
-                static fn(string $name): array => ['name' => $name],
+                static fn (string $name): array => ['name' => $name],
                 array_keys($settings)
             ));
         }
-        $value= match($columnType) {
+        $value = match ($columnType) {
             'columns' => $this->datatableService->normalizedColumns($settings, $this->columns, $this->getTwigBlocks()),
-            'facet_columns' => $this->datatableService->normalizedColumns($settings, $this->facet_columns, $this->getTwigBlocks())
+            'facet_columns' => $this->datatableService->normalizedColumns($settings, $this->facet_columns, $this->getTwigBlocks()),
         };
+
         return $value;
     }
 
@@ -164,28 +165,26 @@ class ApiGridComponent implements TwigBlocksInterface
         $searchBuilderColumns = [];
         foreach ($this->getNormalizedColumns() as $idx => $column) {
             if ($column->browsable) {
-                $searchBuilderColumns[] = $idx+1;
+                $searchBuilderColumns[] = $idx + 1;
             }
         }
-        return $searchBuilderColumns;
 
+        return $searchBuilderColumns;
     }
 
     public function getModalTemplate(): ?string
     {
-        return $this->getTwigBlocks()['_modal']??null;
-
+        return $this->getTwigBlocks()['_modal'] ?? null;
     }
 
     public function mount(string $class,
-//                          array $columns=[],
-                           ?string $apiRoute=null,
-                           ?string $apiGetCollectionUrl=null,
-                           array $filter = [],
-                           array $buttons = [],
-                           bool $meili=false
-    )
-    {
+        //                          array $columns=[],
+        ?string $apiRoute = null,
+        ?string $apiGetCollectionUrl = null,
+        array $filter = [],
+        array $buttons = [],
+        bool $meili = false,
+    ) {
         $this->filter = $filter;
         $this->buttons = $buttons;
         $this->class = $class;
@@ -203,7 +202,6 @@ class ApiGridComponent implements TwigBlocksInterface
         return array_values(array_filter($this->getNormalizedColumns(), function ($column) {
             return $column->inSearchPane || $column->browsable;
         }));
-
     }
 
     public function getShowRoute(): ?string
@@ -214,6 +212,6 @@ class ApiGridComponent implements TwigBlocksInterface
 
         $shortName = (new \ReflectionClass($this->class))->getShortName();
 
-        return 'app_' . strtolower($shortName) . '_show';
+        return 'app_'.strtolower($shortName).'_show';
     }
 }

@@ -4,35 +4,32 @@ declare(strict_types=1);
 
 namespace Survos\ApiGridBundle;
 
-use Survos\ApiGridBundle\Api\Filter\FacetsFieldSearchFilter;
+use Survos\ApiGridBundle\Components\ApiGridComponent;
 use Survos\ApiGridBundle\Components\ItemGridComponent;
 use Survos\ApiGridBundle\Controller\AdminBrowseController;
 use Survos\ApiGridBundle\Controller\GridController;
+use Survos\ApiGridBundle\Filter\MeiliSearch\DataTableFacetsFilter;
+use Survos\ApiGridBundle\Filter\MeiliSearch\DataTableFilter;
 use Survos\ApiGridBundle\Filter\MeiliSearch\MultiFieldSearchFilter as MeiliMultiFieldSearchFilter;
-use Survos\ApiGridBundle\Components\ApiGridComponent;
+use Survos\ApiGridBundle\Filter\MeiliSearch\SortFilter;
+use Survos\ApiGridBundle\Hydra\Serializer\DataTableCollectionNormalizer;
 use Survos\ApiGridBundle\Service\DatatableService;
 use Survos\ApiGridBundle\Service\MeiliService;
+use Survos\ApiGridBundle\State\MeiliSearchStateProvider;
 use Survos\ApiGridBundle\Twig\TwigExtension;
-use Survos\Kit\AbstractUxBundle;
 use Survos\Grid\SurvosGridBundle;
-use Symfony\Component\DependencyInjection\Kernel\RequiredBundle;
+use Survos\Kit\AbstractUxBundle;
 use Survos\Kit\Traits\HasConfigurableRoutes;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Kernel\RequiredBundle;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Reference;
-use Symfony\UX\Chartjs\Builder\ChartBuilder;
-use Symfony\UX\Chartjs\Builder\ChartBuilderInterface;
 use Twig\Environment;
-use Survos\ApiGridBundle\Filter\MeiliSearch\SortFilter;
-use Survos\ApiGridBundle\Filter\MeiliSearch\DataTableFilter;
-use Survos\ApiGridBundle\Filter\MeiliSearch\DataTableFacetsFilter;
-use Survos\ApiGridBundle\State\MeiliSearchStateProvider;
-use Survos\ApiGridBundle\Hydra\Serializer\DataTableCollectionNormalizer;
+
 use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_iterator;
-use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_locator;
 
 #[RequiredBundle(SurvosGridBundle::class)]
 // Symfony\Component\HttpKernel\Bundle\Bundle <-- Flex auto-registration marker (see Survos\Kit\AbstractSurvosBundle)
@@ -59,7 +56,7 @@ class SurvosApiGridBundle extends AbstractUxBundle
         $builder->register('survos_api_grid_datatable_service', DatatableService::class)
             ->setAutowired(true);
 
-//        dd($config);
+        //        dd($config);
         // Meili is optional. Avoid registering the service when the PHP client isn't installed.
         if ($meiliAvailable) {
             $builder->register($id = 'api_meili_service', MeiliService::class)
@@ -135,9 +132,7 @@ class SurvosApiGridBundle extends AbstractUxBundle
             ;
             // The tag makes explicit operation provider references resolvable by API
             // Platform's locator. It does not replace the default Doctrine provider.
-
         }
-
 
         $builder->register(DataTableCollectionNormalizer::class)
             ->setAutowired(true)
@@ -152,7 +147,7 @@ class SurvosApiGridBundle extends AbstractUxBundle
 //            ->setArgument('$resourceMetadataFactory', new Reference('api_platform.metadata.resource.metadata_collection_factory'))
             ->addTag('serializer.normalizer', ['priority' => -900]);
 
-//        $container->services()->alias(MeiliCollectionNormalizer::class,'api_platform.hydra.normalizer.collection');
+        //        $container->services()->alias(MeiliCollectionNormalizer::class,'api_platform.hydra.normalizer.collection');
         // $builder->register('api_platform.hydra.normalizer.partial_collection_view', PartialCollectionViewNormalizer::class)
         //     ->setArgument('$collectionNormalizer', new Reference('api_platform.hydra.normalizer.partial_collection_view.inner'))
         //     ->setArgument('$pageParameterName', new Reference('api_platform.collection.pagination.page_parameter_name'))
@@ -171,7 +166,6 @@ class SurvosApiGridBundle extends AbstractUxBundle
             ->setArgument('$logger', new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE))
             ->setArgument('$datatableService', new Reference(DatatableService::class))
             ->setArgument('$stimulusController', $config['stimulus_controller']);
-
 
         //        $builder->register(SimpleDatatablesComponent::class);
         //        $builder->autowire(SimpleDatatablesComponent::class);

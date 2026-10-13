@@ -50,7 +50,7 @@ class AdminBrowseController extends AbstractController
             'code' => $code,
             'label' => $metadata->getReflectionClass()->getShortName(),
             'entities' => [],
-            'showRoute' => $this->routeExists($code . '_show') ? $code . '_show' : null,
+            'showRoute' => $this->routeExists($code.'_show') ? $code.'_show' : null,
         ]);
     }
 
@@ -67,7 +67,7 @@ class AdminBrowseController extends AbstractController
                 'code' => $code,
                 'class' => $metadata->getName(),
                 'label' => $metadata->getReflectionClass()->getShortName(),
-                'showRoute' => $this->routeExists($code . '_show') ? $code . '_show' : null,
+                'showRoute' => $this->routeExists($code.'_show') ? $code.'_show' : null,
             ];
         }
 
@@ -104,6 +104,6 @@ class AdminBrowseController extends AbstractController
 
     private function routeExists(string $route): bool
     {
-        return $this->router->getRouteCollection()->get($route) !== null;
+        return null !== $this->router->getRouteCollection()->get($route);
     }
 }

@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace Survos\ApiGridBundle\Paginator;
 
 use ApiPlatform\Doctrine\Orm\AbstractPaginator;
+use ApiPlatform\Doctrine\Orm\Extension\QueryResultCollectionExtensionInterface;
 use ApiPlatform\Doctrine\Orm\Paginator;
 use ApiPlatform\Doctrine\Orm\Util\QueryChecker;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
@@ -21,8 +22,6 @@ use Doctrine\ORM\Tools\Pagination\CountWalker;
 use Doctrine\ORM\Tools\Pagination\Paginator as DoctrineOrmPaginator;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
-
-use ApiPlatform\Doctrine\Orm\Extension\QueryResultCollectionExtensionInterface;
 
 // Help opcache.preload discover always-needed symbols
 class_exists(AbstractPaginator::class);
@@ -39,9 +38,6 @@ final class SlicePaginationExtension implements QueryResultCollectionExtensionIn
     {
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function applyToCollection(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $resourceClass, ?Operation $operation = null, array $context = []): void
     {
         if (null === $pagination = $this->getPagination($queryBuilder, $operation, $context)) {
@@ -51,21 +47,18 @@ final class SlicePaginationExtension implements QueryResultCollectionExtensionIn
         $request = Request::createFromGlobals();
         [$offset, $limit] = $pagination;
 
-        if($request->query->get('limit')) {
+        if ($request->query->get('limit')) {
             $limit = $request->query->get('limit');
         }
-        if($request->query->get('offset')) {
+        if ($request->query->get('offset')) {
             $offset = $request->query->get('offset');
         }
 
         $queryBuilder
-            ->setFirstResult((int)$offset)
-            ->setMaxResults((int)$limit);
+            ->setFirstResult((int) $offset)
+            ->setMaxResults((int) $limit);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function supportsResult(string $resourceClass, ?Operation $operation = null, array $context = []): bool
     {
         if ($context['graphql_operation_name'] ?? false) {
@@ -75,9 +68,6 @@ final class SlicePaginationExtension implements QueryResultCollectionExtensionIn
         return $this->pagination->isEnabled($operation, $context);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getResult(QueryBuilder $queryBuilder, ?string $resourceClass = null, ?Operation $operation = null, array $context = []): iterable
     {
         $query = $queryBuilder->getQuery();

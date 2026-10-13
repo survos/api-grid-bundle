@@ -1,28 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Survos\ApiGridBundle\Hydra\Serializer;
 
-use ApiPlatform\Metadata\IriConverterInterface;
-use ApiPlatform\Metadata\ResourceClassResolverInterface;
-use ApiPlatform\Metadata\UrlGeneratorInterface;
+use ApiPlatform\Doctrine\Orm\Paginator as OrmPaginator;
 use ApiPlatform\JsonLd\AnonymousContextBuilderInterface;
 use ApiPlatform\JsonLd\ContextBuilder;
 use ApiPlatform\JsonLd\ContextBuilderInterface;
 use ApiPlatform\Metadata\Error;
-use ApiPlatform\Metadata\HttpOperation;
+use ApiPlatform\Metadata\IriConverterInterface;
 use ApiPlatform\Metadata\Resource\Factory\ResourceMetadataCollectionFactoryInterface;
+use ApiPlatform\Metadata\ResourceClassResolverInterface;
+use ApiPlatform\Metadata\UrlGeneratorInterface;
+use ApiPlatform\Metadata\Util\IriHelper;
 use ApiPlatform\Serializer\AbstractCollectionNormalizer;
-use ApiPlatform\Doctrine\Orm\Paginator as OrmPaginator;
 use ApiPlatform\State\Pagination\PaginatorInterface;
 use ApiPlatform\State\Pagination\PartialPaginatorInterface;
-use ApiPlatform\Metadata\Util\IriHelper;
 use Psr\Log\LoggerInterface;
 use Survos\ApiGridBundle\Event\FacetEvent;
 use Survos\FieldBundle\Repository\QueryBuilderHelperInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\Intl\Countries;
-use Symfony\Component\Intl\Languages;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 final class DataTableCollectionNormalizer extends AbstractCollectionNormalizer
@@ -36,19 +35,18 @@ final class DataTableCollectionNormalizer extends AbstractCollectionNormalizer
     ];
 
     public function __construct(
-        private             ContextBuilderInterface  $contextBuilder,
-        ResourceClassResolverInterface                        $resourceClassResolver,
-        private readonly LoggerInterface                      $logger,
-        private EventDispatcherInterface                      $eventDispatcher,
-        private readonly RequestStack                         $requestStack,
-        private readonly IriConverterInterface                $iriConverter,
+        private ContextBuilderInterface $contextBuilder,
+        ResourceClassResolverInterface $resourceClassResolver,
+        private readonly LoggerInterface $logger,
+        private EventDispatcherInterface $eventDispatcher,
+        private readonly RequestStack $requestStack,
+        private readonly IriConverterInterface $iriConverter,
         protected ?ResourceMetadataCollectionFactoryInterface $resourceMetadataFactory,
-        array                                                 $defaultContext = [],
+        array $defaultContext = [],
         private $addLocaleToRouteParameters = false,
-        protected string                                      $pageParameterName = 'page'
-    )
-    {
-//        dd($this->contextBuilder::class);
+        protected string $pageParameterName = 'page',
+    ) {
+        //        dd($this->contextBuilder::class);
         $this->defaultContext = array_merge($this->defaultContext, $defaultContext);
 
         parent::__construct($resourceClassResolver, $pageParameterName);
@@ -60,14 +58,12 @@ final class DataTableCollectionNormalizer extends AbstractCollectionNormalizer
     }
 
     /**
-     * {@inheritdoc}
-     *
      * @param iterable $object
      */
     public function normalize(mixed $object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
     {
-//        dd($object, $format, $context);
-//        $this->logger->error(sprintf("%s ", $format));
+        //        dd($object, $format, $context);
+        //        $this->logger->error(sprintf("%s ", $format));
         if (!isset($context['resource_class']) || isset($context['api_sub_level'])) {
             return $this->normalizeRawCollection($object, $format, $context);
         }
@@ -78,7 +74,7 @@ final class DataTableCollectionNormalizer extends AbstractCollectionNormalizer
 
         if (is_array($object) && isset($object['data']) && $this->isMeiliSearchResult($object['data'])) {
             if ($context['request_uri']) {
-                parse_str((string)parse_url($context['request_uri'], PHP_URL_QUERY), $params);
+                parse_str((string) parse_url($context['request_uri'], PHP_URL_QUERY), $params);
                 $locale = $params['_locale'] ?? null;
                 $context['locale'] = $locale;
                 if (isset($params['facets']) && is_array($params['facets'])) {
@@ -95,12 +91,12 @@ final class DataTableCollectionNormalizer extends AbstractCollectionNormalizer
         if ($object instanceof PaginatorInterface) {
             $data = $this->getNextData($object, $context, []);
             if ($context['request_uri'] && $object instanceof OrmPaginator) {
-                parse_str((string)parse_url($context['request_uri'], PHP_URL_QUERY), $params);
+                parse_str((string) parse_url($context['request_uri'], PHP_URL_QUERY), $params);
                 $em = $object->getQuery()->getEntityManager();
                 $metadata = $em->getClassMetadata($context['operation']->getClass());
                 $repo = $em->getRepository($context['operation']->getClass());
-//                assert(is_subclass_of($repo, QueryBuilderHelperInterface::class),
-//                    $repo::class . " must implement QueryBuilderHelperInterface");
+                //                assert(is_subclass_of($repo, QueryBuilderHelperInterface::class),
+                //                    $repo::class . " must implement QueryBuilderHelperInterface");
 
                 if (isset($params['facets']) && is_array($params['facets'])) {
                     $doctrineFacets = [];
@@ -144,7 +140,7 @@ final class DataTableCollectionNormalizer extends AbstractCollectionNormalizer
         unset($context['operation_type'], $context['operation_name']);
 
         $itemsData = $this->getItemsData($object, $format, $context);
-//        dd($data, $itemsData, $paginationData);
+        //        dd($data, $itemsData, $paginationData);
 
         return array_merge_recursive($data, $paginationData, $itemsData, ['facets' => $facets]);
     }
@@ -154,7 +150,7 @@ final class DataTableCollectionNormalizer extends AbstractCollectionNormalizer
      */
     protected function getPaginationData(iterable $object, array $context = []): array
     {
-//        dd($object, $context);
+        //        dd($object, $context);
         $resourceClass = $this->resourceClassResolver->getResourceClass($object, $context['resource_class']);
         // This adds "jsonld_has_context" by reference, we moved the code to this class.
         // To follow a note I wrote in the ItemNormalizer, we need to change the JSON-LD context generation as it is more complicated then it should.
@@ -187,7 +183,7 @@ final class DataTableCollectionNormalizer extends AbstractCollectionNormalizer
     {
         try {
             $em = $object->getQuery()->getEntityManager();
-            if ($em->getConnection()->getDatabasePlatform()->getName() !== 'postgresql') {
+            if ('postgresql' !== $em->getConnection()->getDatabasePlatform()->getName()) {
                 return 0;
             }
 
@@ -235,16 +231,16 @@ final class DataTableCollectionNormalizer extends AbstractCollectionNormalizer
         foreach ($object as $obj) {
             if ($iriOnly) {
                 $normalizedData = $this->iriConverter->getIriFromResource($obj);
-//                $normalizedData =  $this->iriConverter->getIriFromResource($obj); // ??
+                //                $normalizedData =  $this->iriConverter->getIriFromResource($obj); // ??
                 $normalizedData = $this->iriConverter->getResourceFromIri($obj);
             } else {
                 $normalizedData = $this->normalizer->normalize($obj, $format, $context + ['jsonld_has_context' => true]);
             }
             // hack -- this should be its own normalizer.  Plus, it may need to be recursive
-//            if ($this->addLocaleToRouteParameters && array_key_exists('rp', $normalizedData)) {
-//                $request = $this->requestStack->getCurrentRequest();
-//                $normalizedData['rp']['_locale'] = $request->getLocale();
-//            }
+            //            if ($this->addLocaleToRouteParameters && array_key_exists('rp', $normalizedData)) {
+            //                $request = $this->requestStack->getCurrentRequest();
+            //                $normalizedData['rp']['_locale'] = $request->getLocale();
+            //            }
             $data['member'][] = $normalizedData;
         }
 
@@ -273,32 +269,31 @@ final class DataTableCollectionNormalizer extends AbstractCollectionNormalizer
                 $data = [];
 
                 foreach ($facet as $facetKey => $fdata) {
-//                dd($facet, $facetKey, $facetCount, $key);
+                    //                dd($facet, $facetKey, $facetCount, $key);
                     // translation? js for language and country?
-//                $fdata["label"] = $label;
-//                $fdata["total"] = $facetValue;
-                    $fdata["value"] = $facetKey;
-//                $fdata["count"] = 0;
-//                if (isset($facets[$key][$facetKey])) {
-//                    $fdata["count"] = $facets[$key][$facetKey];
-//                }
-//                dd($fdata);
+                    //                $fdata["label"] = $label;
+                    //                $fdata["total"] = $facetValue;
+                    $fdata['value'] = $facetKey;
+                    //                $fdata["count"] = 0;
+                    //                if (isset($facets[$key][$facetKey])) {
+                    //                    $fdata["count"] = $facets[$key][$facetKey];
+                    //                }
+                    //                dd($fdata);
                     $data[] = $fdata;
                 }
                 $facetsData[$key] = $data;
             }
         } else {
-
             $facetsData = [];
             foreach ($params as $key => $facet) {
                 $data = [];
                 foreach ($facet as $facetKey => $facetValue) {
-                    $fdata["label"] = $facetKey;
-                    $fdata["total"] = $facetValue;
-                    $fdata["value"] = $facetKey;
-                    $fdata["count"] = 0;
+                    $fdata['label'] = $facetKey;
+                    $fdata['total'] = $facetValue;
+                    $fdata['value'] = $facetKey;
+                    $fdata['count'] = 0;
                     if (isset($facets[$key][$facetKey])) {
-                        $fdata["count"] = $facets[$key][$facetKey];
+                        $fdata['count'] = $facets[$key][$facetKey];
                     }
                     $data[] = $fdata;
                 }
@@ -319,6 +314,7 @@ final class DataTableCollectionNormalizer extends AbstractCollectionNormalizer
 
     /**
      * @param array<string, array<int, array{label:mixed,value:mixed}>> $facetsData
+     *
      * @return array<string, array<int, array{label:mixed,value:mixed}>>
      */
     private function createColumnControlOptions(array $facetsData): array
@@ -392,35 +388,34 @@ final class DataTableCollectionNormalizer extends AbstractCollectionNormalizer
 
     private function getNextData($object, $context, $data)
     {
-//        dd($object, $context, $data);
+        //        dd($object, $context, $data);
         $parsed = IriHelper::parseIri($context['request_uri'] ?? '/', $this->pageParameterName);
         $currentPage = $lastPage = $itemsPerPage = $pageTotalItems = null;
         if ($paginated = ($object instanceof PartialPaginatorInterface)) {
             if ($object instanceof PaginatorInterface) {
-                $lastPage = (int)$object->getLastPage();
-                $paginated = $lastPage !== 1;
+                $lastPage = (int) $object->getLastPage();
+                $paginated = 1 !== $lastPage;
             } else {
                 $itemsPerPage = $object->getItemsPerPage();
-                $pageTotalItems = (float)\count($object);
+                $pageTotalItems = (float) \count($object);
             }
 
-            $currentPage = (int)$object->getCurrentPage();
+            $currentPage = (int) $object->getCurrentPage();
         }
 
         $paginated = $this->isMeiliSearchResult($object);
         if ($this->isMeiliSearchResult($object) && $paginated) {
             $itemsPerPage = $object->getLimit();
-            $lastPage = (int)ceil($object->getEstimatedTotalHits() / $itemsPerPage);
+            $lastPage = (int) ceil($object->getEstimatedTotalHits() / $itemsPerPage);
             $pageTotalItems = $object->getEstimatedTotalHits();
 
-            $currentPage = (int)floor($object->getOffset() / $itemsPerPage) + 1;
-//            dd($object->getOffset(), $itemsPerPage, $currentPage, $lastPage, $paginated, $object::class, $object);
+            $currentPage = (int) floor($object->getOffset() / $itemsPerPage) + 1;
+            //            dd($object->getOffset(), $itemsPerPage, $currentPage, $lastPage, $paginated, $object::class, $object);
         }
 
         $id = IriHelper::createIri($parsed['parts'], $parsed['parameters'], $this->pageParameterName, $paginated ? $currentPage : null);
         // why isn't @type = Collection?
         $data['view'] = ['@id' => $id, '@type' => 'PartialCollectionView'];
-
 
         if ($paginated) {
             return $this->populateDataWithPagination($data, $parsed, $currentPage, $lastPage, $itemsPerPage, $pageTotalItems);
@@ -429,9 +424,8 @@ final class DataTableCollectionNormalizer extends AbstractCollectionNormalizer
         return $data;
     }
 
-
     private function populateDataWithPagination(array $data, array $parsed, int $currentPage, int $lastPage,
-                                                 int $itemsPerPage, int $pageTotalItems): array
+        int $itemsPerPage, int $pageTotalItems): array
     {
         if (null !== $lastPage) {
             $data['view']['first'] = IriHelper::createIri($parsed['parts'], $parsed['parameters'], $this->pageParameterName, 1.);

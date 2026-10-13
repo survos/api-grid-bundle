@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 use Castor\Attribute\AsTask;
 
-use function Castor\io;
 use function Castor\capture;
+use function Castor\io;
 
 #[AsTask(description: 'Welcome to Castor!')]
 function hello(): void

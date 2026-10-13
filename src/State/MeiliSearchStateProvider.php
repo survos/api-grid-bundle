@@ -1,37 +1,34 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Survos\ApiGridBundle\State;
 
-use ApiPlatform\Metadata\Operation;
 use ApiPlatform\Metadata\CollectionOperationInterface;
+use ApiPlatform\Metadata\Operation;
+use ApiPlatform\State\Pagination\Pagination;
 use ApiPlatform\State\ProviderInterface;
-use Doctrine\DBAL\Exception;
+use Meilisearch\Search\SearchResult;
 use Psr\Http\Client\ClientInterface;
 use Survos\ApiGridBundle\Service\MeiliService;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
-use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
-use Doctrine\ORM\EntityManagerInterface;
-use ApiPlatform\State\Pagination\Pagination;
-use Meilisearch\Search\SearchResult;
 use Symfony\Component\Stopwatch\Stopwatch;
 
 class MeiliSearchStateProvider implements ProviderInterface
 {
     public function __construct(
-        private Pagination                     $pagination,
-        private iterable                       $meiliSearchFilters,
-        protected MeiliService                 $meili,
+        private Pagination $pagination,
+        private iterable $meiliSearchFilters,
+        protected MeiliService $meili,
         private readonly DenormalizerInterface $denormalizer,
-        protected ?ClientInterface             $httpClient = null,
-        private ?Stopwatch                     $stopwatch = null
-    )
-    {
+        protected ?ClientInterface $httpClient = null,
+        private ?Stopwatch $stopwatch = null,
+    ) {
     }
 
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|array|null
     {
         if ($operation instanceof CollectionOperationInterface) {
-
             $resourceClass = $operation->getClass();
             $body = [];
 
@@ -41,8 +38,8 @@ class MeiliSearchStateProvider implements ProviderInterface
 
             $searchQuery = $context['filters']['search'] ?? '';
 
-            $body['limit'] = (int)$context['filters']['limit'] ??= $this->pagination->getLimit($operation, $context);
-            $body['offset'] = (int)$context['filters']['offset'] ??= $this->pagination->getOffset($operation, $context);
+            $body['limit'] = (int) $context['filters']['limit'] ??= $this->pagination->getLimit($operation, $context);
+            $body['offset'] = (int) $context['filters']['offset'] ??= $this->pagination->getOffset($operation, $context);
             $body['attributesToHighlight'] = ['t']; // from PixieInterface!
             $body['highlightPreTag'] = '<em class="bg-info">';
             $body['highlightPostTag'] = '</em>';
@@ -50,23 +47,22 @@ class MeiliSearchStateProvider implements ProviderInterface
             $locale = $context['filters']['_locale'] ?? null;
             // @todo: get from request?
 
-            //
             if (!$indexName = $context['uri_variables']['indexName'] ?? false) {
                 $indexName = $this::getSearchIndexObject($operation->getClass(), $locale);
             }
             $index = $this->meili->getIndex($indexName);
             $event = $this->stopwatch->start('meili-search', 'meili');
             $data = $index->search($searchQuery, $body);
-//                dd($data, $searchQuery);
+            //                dd($data, $searchQuery);
             $event->stop();
 
-//            dd($context, $indexName);
+            //            dd($context, $indexName);
             try {
-//                $client = $this->meili->getMeiliClient();
-//                $index = $client->index($indexName);
-                //dd($body);
+                //                $client = $this->meili->getMeiliClient();
+                //                $index = $client->index($indexName);
+                // dd($body);
             } catch (\Exception $exception) {
-                throw new \Exception($indexName . ' -- ' . $exception->getMessage());
+                throw new \Exception($indexName.' -- '.$exception->getMessage());
             }
 
             $event = $this->stopwatch->start('meili-denormalizeObject', 'meili');
@@ -88,7 +84,8 @@ class MeiliSearchStateProvider implements ProviderInterface
 
     public static function getSearchIndexObject(string $class, ?string $locale = null)
     {
-        $class = explode("\\", $class);
+        $class = explode('\\', $class);
+
         return end($class);
     }
 
@@ -98,13 +95,13 @@ class MeiliSearchStateProvider implements ProviderInterface
         $returnObject['limit'] = $data->getLimit();
         $returnObject['estimatedTotalHits'] = $data->getEstimatedTotalHits();
 
-
         $returnObject['hits'] = $this->denormalizer->normalize($data->getHits(), 'meili');
         $returnObject['processingTimeMs'] = $data->getProcessingTimeMs();
         $returnObject['query'] = $data->getQuery();
         $returnObject['facetDistribution'] = $data->getFacetDistribution();
         $returnObject['facetStats'] = $data->getFacetStats();
-//        dd($returnObject['facetDistribution']['keywords'], $returnObject['facetStats']);
+
+        //        dd($returnObject['facetDistribution']['keywords'], $returnObject['facetStats']);
         return new SearchResult($returnObject);
     }
 }

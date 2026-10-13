@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Survos\ApiGridBundle\Components\Common;
 
 interface TwigBlocksInterface
 {
-    function getTwigBlocks(): array;
-
+    public function getTwigBlocks(): array;
 }

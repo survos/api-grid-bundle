@@ -14,9 +14,6 @@ trait JsonSearchFilterTrait
 {
     use PropertyHelperTrait;
 
-    /**
-     * {@inheritdoc}
-     */
     public function getDescription(string $resourceClass): array
     {
         $description = [];
@@ -31,18 +28,18 @@ trait JsonSearchFilterTrait
                 continue;
             }
 
-//            foreach ([$property, "{$property}[]"] as $filterParameterName) {
-//                $description[$filterParameterName] = [
-//                    'property' => $property,
-//                    'type' => 'string',
-//                    'required' => false,
-//                ];
-//            }
+            //            foreach ([$property, "{$property}[]"] as $filterParameterName) {
+            //                $description[$filterParameterName] = [
+            //                    'property' => $property,
+            //                    'type' => 'string',
+            //                    'required' => false,
+            //                ];
+            //            }
 
             $description += $this->getFilterDescription($property, null);
-//            $description += $this->getFilterDescription($property, self::PARAMETER_OPERATIOR);
-//            $description += $this->getFilterDescription($property, self::PARAMETER_EQUALS);
-//            $description += $this->getFilterDescription($property, self::PARAMETER_BETWEEN);
+            //            $description += $this->getFilterDescription($property, self::PARAMETER_OPERATIOR);
+            //            $description += $this->getFilterDescription($property, self::PARAMETER_EQUALS);
+            //            $description += $this->getFilterDescription($property, self::PARAMETER_BETWEEN);
         }
 
         return $description;
@@ -69,20 +66,17 @@ trait JsonSearchFilterTrait
                     'required' => false,
                 ],
             ];
-
-        } else {
-            // not sure how to make this an array...
-            return [
-                sprintf('%s', $propertyName) => [
-                    'property' => $propertyName . '[]',
-                    'type' => 'string',
-                    'is_collection' => true,
-                    'required' => false,
-                ],
-            ];
-
         }
 
+        // not sure how to make this an array...
+        return [
+            sprintf('%s', $propertyName) => [
+                'property' => $propertyName.'[]',
+                'type' => 'string',
+                'is_collection' => true,
+                'required' => false,
+            ],
+        ];
     }
 
     private function normalizeValues(array $values, string $property): ?array

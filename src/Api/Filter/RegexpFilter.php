@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 // api/src/Filter/RegexpFilter.php
 
 namespace Survos\ApiGridBundle\Api\Filter;
 
-use ApiPlatform\Doctrine\Orm\Filter\AbstractContextAwareFilter;
 use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\TypeInfo\Type;
+
 final class RegexpFilter extends AbstractFilter
 {
     protected function filterProperty(
@@ -19,12 +21,12 @@ final class RegexpFilter extends AbstractFilter
         QueryNameGeneratorInterface $queryNameGenerator,
         string $resourceClass,
         ?Operation $operation = null,
-        array $context = []
+        array $context = [],
     ): void {
         // otherwise filter is applied to order and page as well
         if (
-            ! $this->isPropertyEnabled($property, $resourceClass) ||
-            ! $this->isPropertyMapped($property, $resourceClass)
+            !$this->isPropertyEnabled($property, $resourceClass)
+            || !$this->isPropertyMapped($property, $resourceClass)
         ) {
             return;
         }
@@ -38,7 +40,7 @@ final class RegexpFilter extends AbstractFilter
     // This function is only used to hook in documentation generators (supported by Swagger and Hydra)
     public function getDescription(string $resourceClass): array
     {
-        if (! $this->properties) {
+        if (!$this->properties) {
             return [];
         }
 

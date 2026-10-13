@@ -5,17 +5,12 @@ declare(strict_types=1);
 namespace Survos\ApiGridBundle\Filter\MeiliSearch;
 
 use ApiPlatform\Metadata\ApiProperty;
-use ApiPlatform\Metadata\ResourceClassResolverInterface;
 use ApiPlatform\Metadata\Exception\PropertyNotFoundException;
 use ApiPlatform\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
+use ApiPlatform\Metadata\ResourceClassResolverInterface;
 use Symfony\Component\TypeInfo\Type;
 use Symfony\Component\TypeInfo\Type\CollectionType;
 use Symfony\Component\TypeInfo\Type\ObjectType;
-
-use function array_shift;
-use function explode;
-use function implode;
-use function method_exists;
 
 /** Field datatype helpers shared by the Meilisearch filters. */
 trait UtilTrait
@@ -25,7 +20,7 @@ trait UtilTrait
 
     private function getPropertyType(ApiProperty $property): ?Type
     {
-        if (method_exists($property, 'getNativeType')) {
+        if (\method_exists($property, 'getNativeType')) {
             return $property->getNativeType();
         }
 
@@ -81,8 +76,8 @@ trait UtilTrait
 
     private function getNestedFieldPath(string $resourceClass, string $property): ?string
     {
-        $properties = explode('.', $property);
-        $currentProperty = array_shift($properties);
+        $properties = \explode('.', $property);
+        $currentProperty = \array_shift($properties);
         if (!$properties) {
             return null;
         }
@@ -103,7 +98,7 @@ trait UtilTrait
             return null;
         }
 
-        $nestedPath = $this->getNestedFieldPath($className, implode('.', $properties));
+        $nestedPath = $this->getNestedFieldPath($className, \implode('.', $properties));
         if (null !== $nestedPath) {
             return "$currentProperty.$nestedPath";
         }

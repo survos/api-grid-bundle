@@ -1,22 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 // really this should extend, use or decorate MeiliService in MeiliAdminBundle
 
 namespace Survos\ApiGridBundle\Service;
 
 use ApiPlatform\Metadata\ApiResource;
-use App\Entity\Core;
-use App\Entity\CoreInterface;
-use App\Entity\Owner;
-use App\Entity\Project;
-use App\Entity\Sheet;
-use App\Entity\Spreadsheet;
-use App\Repository\ProjectRepository;
-use App\Service\AppService;
-use App\Service\MusDigService;
-use App\Service\PdoCacheService;
-use App\Service\ProjectService;
-use App\Service\SpreadsheetService;
 use Doctrine\ORM\EntityManagerInterface;
 use Meilisearch\Client;
 use Meilisearch\Contracts\DocumentsQuery;
@@ -24,23 +14,8 @@ use Meilisearch\Endpoints\Index;
 use Meilisearch\Exceptions\ApiException;
 use Psr\Http\Client\ClientInterface;
 use Psr\Log\LoggerInterface;
-use Survos\GridGroupBundle\CsvSchema\Parser;
-use Survos\GridGroupBundle\Model\Property;
-use Survos\GridGroupBundle\Model\Schema;
-use Survos\GridGroupBundle\Service\CsvDatabase;
-use Survos\GridGroupBundle\Service\Reader;
-use Symfony\Component\Cache\Adapter\DoctrineDbalAdapter;
-use Symfony\Component\Console\Helper\ProgressBar;
-use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
-use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\String\Slugger\AsciiSlugger;
-use Symfony\Component\Yaml\Yaml;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
-
-use function Symfony\Component\String\u;
 
 class MeiliService
 {
@@ -76,17 +51,16 @@ class MeiliService
             $args = $attribute->getArguments();
             // @todo: this could also be inside of the operation!
             if (array_key_exists('normalizationContext', $args)) {
-                assert(array_key_exists('groups', $args['normalizationContext']), "Add a groups to " . $meta->getName());
+                assert(array_key_exists('groups', $args['normalizationContext']), 'Add a groups to '.$meta->getName());
                 $groups = $args['normalizationContext']['groups'];
                 if (is_string($groups)) {
                     $groups = [$groups];
                 }
             }
         }
-        $this->groupsByClass[$class]=$groups;
+        $this->groupsByClass[$class] = $groups;
 
         return $groups;
-
     }
 
     public function setConfig(array $config): void
@@ -94,26 +68,24 @@ class MeiliService
         $this->config = $config;
     }
 
-
     public function reset(string $indexName)
     {
         $client = $this->getMeiliClient();
         try {
             // hmm, this should be clearer!
-//            $index = $client->index($indexName);
+            //            $index = $client->index($indexName);
             $index = $client->getIndex($indexName);
             $response = $client->deleteIndex($indexName);
             $task = $this->waitForTask($response['taskUid'], $index);
-//            $this->io()->info("Deletion Task is at " . $task['status']);
-            $this->logger->info("Index " . $indexName . " has been deleted.");
+            //            $this->io()->info("Deletion Task is at " . $task['status']);
+            $this->logger->info('Index '.$indexName.' has been deleted.');
         } catch (ApiException $exception) {
-            if ($exception->errorCode == 'index_not_found') {
+            if ('index_not_found' == $exception->errorCode) {
                 try {
-//                    $this->io()->info("Index $indexName does not exist.");
+                    //                    $this->io()->info("Index $indexName does not exist.");
                 } catch (\Exception) {
-                    //
                 }
-//                    continue;
+            //                    continue;
             } else {
                 dd($exception);
             }
@@ -122,7 +94,6 @@ class MeiliService
 
     public function waitForTask(array|string|int $taskId, ?Index $index = null, bool $stopOnError = true, mixed $dataToDump = null): array
     {
-
         if (is_array($taskId)) {
             $taskId = $taskId['taskUid'];
         }
@@ -135,14 +106,14 @@ class MeiliService
                 && (($status = $task['status']) && !in_array($status, ['failed', 'succeeded']))
             ) {
                 if (isset($this->logger)) {
-//                    $this->logger->info(sprintf("Task %s is at %s", $taskId, $status));
+                    //                    $this->logger->info(sprintf("Task %s is at %s", $taskId, $status));
                 }
                 usleep(50_000);
-            };
-            if ($status == 'failed') {
+            }
+            if ('failed' == $status) {
                 if ($stopOnError) {
-                    $this->logger?->warning(json_encode($dataToDump ?? [], JSON_PRETTY_PRINT+JSON_UNESCAPED_SLASHES));
-                    throw new \Exception("Task has failed " . $task['error']['message']);
+                    $this->logger?->warning(json_encode($dataToDump ?? [], JSON_PRETTY_PRINT + JSON_UNESCAPED_SLASHES));
+                    throw new \Exception('Task has failed '.$task['error']['message']);
                 }
             }
         }
@@ -154,18 +125,13 @@ class MeiliService
     {
         if ($prefix = $this->getConfig()['meiliPrefix']) {
             if (!str_starts_with($indexName, $prefix)) {
-                $indexName = $prefix . $indexName;
+                $indexName = $prefix.$indexName;
             }
         }
+
         return $indexName;
     }
 
-    /**
-     * @param \Meilisearch\Endpoints\Index $index
-     * @param SymfonyStyle $io
-     * @param string|null $indexName
-     * @return array
-     */
     public function waitUntilFinished(Index $index, ?SymfonyStyle $io = null): array
     {
         do {
@@ -186,9 +152,9 @@ class MeiliService
                 sleep(1);
             }
         } while ($isIndexing);
+
         return $stats;
     }
-
 
     public function getMeiliClient(): Client
     {
@@ -199,6 +165,7 @@ class MeiliService
             }
             $client = new Client($this->meiliHost, $this->meiliKey, httpClient: $this->httpClient);
         }
+
         return $client;
     }
 
@@ -213,6 +180,7 @@ class MeiliService
                 $indexes[$indexName] = $index;
             }
         }
+
         return $index;
     }
 
@@ -232,10 +200,10 @@ class MeiliService
         try {
             $index = $client->getIndex($indexName);
         } catch (ApiException $exception) {
-            if ($exception->httpStatus === 404) {
+            if (404 === $exception->httpStatus) {
                 if ($autoCreate) {
                     $task = $this->waitForTask($this->getMeiliClient()->createIndex($indexName, ['primaryKey' => $key]));
-            $this->getMeiliClient()->createIndex($indexName, ['primaryKey' => $key]);
+                    $this->getMeiliClient()->createIndex($indexName, ['primaryKey' => $key]);
                     $index = $client->getIndex($indexName);
                 } else {
                     $index = null;
@@ -244,9 +212,9 @@ class MeiliService
                 dd($exception, $indexName, $client, $exception::class);
             }
         }
+
         return $index;
     }
-
 
     public function applyToIndex(string $indexName, callable $callback, int $batch = 50)
     {
@@ -254,14 +222,14 @@ class MeiliService
         $documents = $index->getDocuments((new DocumentsQuery())->setLimit(0));
         $total = $documents->getTotal();
         $currentPosition = 0;
-        
+
         while ($currentPosition < $total) {
             $documents = $index->getDocuments((new DocumentsQuery())->setOffset($currentPosition)->setLimit($batch));
             $currentPosition += $documents->count();
             foreach ($documents->getIterator() as $row) {
                 $callback($row, $index);
             }
-            $currentPosition++;
+            ++$currentPosition;
         }
     }
 }

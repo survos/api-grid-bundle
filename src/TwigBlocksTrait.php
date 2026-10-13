@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Survos\ApiGridBundle;
 
 use Symfony\Component\DomCrawler\Crawler;
@@ -7,8 +9,7 @@ use Twig\TemplateWrapper;
 
 trait TwigBlocksTrait
 {
-
-    public function getTwigBlocks(?string $id=null): array
+    public function getTwigBlocks(?string $id = null): array
     {
         $customColumnTemplates = [];
         $allTwigBlocks = [];
@@ -22,9 +23,7 @@ trait TwigBlocksTrait
             //            $template = $this->twig->resolveTemplate($this->caller);
             $sourceContext = $this->twig->getLoader()->getSourceContext($this->caller);
             $path = $sourceContext->getPath();
-//            $this->path = $path;
-
-
+            //            $this->path = $path;
 
             //            $this->source = $source;
             // get rid of comments
@@ -33,34 +32,34 @@ trait TwigBlocksTrait
 
             // first, get the component twig
 
-//            if (0)
-//            {
-//
-            /*                if (preg_match('|<twig:api_grid.*?>(.*?)</twig:api_grid>|ms', $source, $mm)) {*/
-//                    $twigBlocks = $mm[1];
-//                    $componentHtml = $mm[0];
-//                    $componentHtml = <<<END
-//    <twig:Alert>
-//        <twig:block name="footer">
-//            <button class="btn btn-primary">Claim your prize</button>
-//        </twig:block>
-//    </twig:Alert>
-//END;
-//                    $crawler = new Crawler($componentHtml);
-//                    $crawler->registerNamespace('twig','fake');
-//                    foreach (['twig:block', 'alert', 'Alter', 'twig|alert', 'twig|block', 'twig', 'block'] as $hack) {
-////                        $crawler->filterXPath($hack)->each(fn(Crawler $node) => dd($node, $node->nodeName(), $source));
-//                    }
-//
-////                    dd($componentHtml);
-////                    $componentHtml = "<html>$componentHtml</html>";
-//
-//                } else {
-////                    dd($source);
-//                    $twigBlocks = $source;
-//                }
-//
-//            }
+            //            if (0)
+            //            {
+            //
+            /*                if (preg_match('|<twig:api_grid.*?>(.*?)</twig:api_grid>|ms', $source, $mm)) { */
+            //                    $twigBlocks = $mm[1];
+            //                    $componentHtml = $mm[0];
+            //                    $componentHtml = <<<END
+            //    <twig:Alert>
+            //        <twig:block name="footer">
+            //            <button class="btn btn-primary">Claim your prize</button>
+            //        </twig:block>
+            //    </twig:Alert>
+            // END;
+            //                    $crawler = new Crawler($componentHtml);
+            //                    $crawler->registerNamespace('twig','fake');
+            //                    foreach (['twig:block', 'alert', 'Alter', 'twig|alert', 'twig|block', 'twig', 'block'] as $hack) {
+            // //                        $crawler->filterXPath($hack)->each(fn(Crawler $node) => dd($node, $node->nodeName(), $source));
+            //                    }
+            //
+            // //                    dd($componentHtml);
+            // //                    $componentHtml = "<html>$componentHtml</html>";
+            //
+            //                } else {
+            // //                    dd($source);
+            //                    $twigBlocks = $source;
+            //                }
+            //
+            //            }
 
             // this blows up with nested blocks.  Also, issue with {% block title %}
             if (preg_match('/component.*?%}(.*?) endcomponent/ms', $source, $mm)) {
@@ -75,10 +74,11 @@ trait TwigBlocksTrait
             $crawler->addHtmlContent($componentHtml);
             $allTwigBlocks = [];
             if ($this->getId()) {
-                $selector = '#' . $this->getId();
+                $selector = '#'.$this->getId();
                 $text = $crawler->filter($selector)->html();
-                $text =  urldecode($text);
+                $text = urldecode($text);
                 $customColumnTemplates[$this->getId()] = $text;
+
                 return $customColumnTemplates;
             }
 
@@ -90,26 +90,18 @@ trait TwigBlocksTrait
                     $twigBlocks = $twigBlocks[0];
                 }
             } elseif ($crawler->filterXPath('//js_twig')->count() > 0) {
-                    $twigBlocks = $crawler->filterXPath('//js_twig')->each(function (Crawler $node, $i) {
-                        return urldecode($node->html());
-                    });
-                    if (is_array($twigBlocks)) {
-                        $twigBlocks = $twigBlocks[0];
-                    }
+                $twigBlocks = $crawler->filterXPath('//js_twig')->each(function (Crawler $node, $i) {
+                    return urldecode($node->html());
+                });
+                if (is_array($twigBlocks)) {
+                    $twigBlocks = $twigBlocks[0];
+                }
             } else {
                 $twigBlocks = $source;
             }
 
-
             if ($crawler->filterXPath('//block')->count() > 0) {
-
-
-
-
-
-
                 $allTwigBlocks = $crawler->filterXPath('//block')->each(function (Crawler $node, $i) {
-
                     $attributes = [];
                     foreach ($node->getNode(0)->attributes as $attribute) {
                         $attributes[$attribute->name] = $attribute->value;
@@ -120,10 +112,10 @@ trait TwigBlocksTrait
                     $html = rawurldecode($node->html());
                     // hack for twig > and <
                     $html = str_replace(['&lt;', '&gt;'], ['<', '>'], $html);
+
                     return [$blockName => $html];
                 });
             }
-
 
             if (preg_match_all('/{% block (.*?) %}(.*?){% endblock/ms', $twigBlocks, $mm, PREG_SET_ORDER)) {
                 foreach ($mm as $m) {
@@ -137,16 +129,13 @@ trait TwigBlocksTrait
                 $customColumnTemplates[$key] = $value;
             }
         }
-//        dd(array_keys($customColumnTemplates), $customColumnTemplates);
+        //        dd(array_keys($customColumnTemplates), $customColumnTemplates);
 
         return $customColumnTemplates;
     }
 
     public function getId()
     {
-        return $this->id??null;
+        return $this->id ?? null;
     }
-
-
-
 }

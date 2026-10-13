@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Survos\ApiGridBundle\Filter\MeiliSearch;
 
-use ApiPlatform\Metadata\ResourceClassResolverInterface;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
 use ApiPlatform\Metadata\Property\Factory\PropertyNameCollectionFactoryInterface;
+use ApiPlatform\Metadata\ResourceClassResolverInterface;
 use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
 final class DataTableFacetsFilter extends AbstractSearchFilter implements FilterInterface
@@ -15,9 +17,10 @@ final class DataTableFacetsFilter extends AbstractSearchFilter implements Filter
         parent::__construct($propertyNameCollectionFactory, $propertyMetadataFactory, $resourceClassResolver, $nameConverter, $properties);
     }
 
-    public function apply(array $clauseBody, string $resourceClass, ?Operation $operation = null, array $context = []): array {
-        if(isset($context['filters']['facets'])) {
-            if(is_array($context['filters']['facets'])) {
+    public function apply(array $clauseBody, string $resourceClass, ?Operation $operation = null, array $context = []): array
+    {
+        if (isset($context['filters']['facets'])) {
+            if (is_array($context['filters']['facets'])) {
                 $clauseBody['facets'] = array_values($context['filters']['facets']);
             }
         }

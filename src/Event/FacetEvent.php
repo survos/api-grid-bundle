@@ -1,21 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Survos\ApiGridBundle\Event;
 
-use Survos\PixieBundle\Command\IterateCommand;
-use Survos\PixieBundle\Model\Config;
-use Survos\PixieBundle\Model\Item;
-use Survos\PixieBundle\Service\PixieImportService;
-use Survos\PixieBundle\StorageBox;
 use Symfony\Contracts\EventDispatcher\Event;
 
 class FacetEvent extends Event
 {
     public function __construct(
         private array $facets,
-        private ?string $sourceLocale=null,
-        private ?string $targetLocale=null,
-        public array $context = []
+        private ?string $sourceLocale = null,
+        private ?string $targetLocale = null,
+        public array $context = [],
     ) {
     }
 
@@ -23,7 +20,6 @@ class FacetEvent extends Event
     {
         return $this->targetLocale;
     }
-
 
     public function getFacets(): array
     {
@@ -33,6 +29,7 @@ class FacetEvent extends Event
     public function setFacets(array $facets): FacetEvent
     {
         $this->facets = $facets;
+
         return $this;
     }
 }

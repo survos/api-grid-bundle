@@ -7,23 +7,24 @@ namespace Survos\ApiGridBundle\Twig;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\IriConverterInterface;
 use Survos\ApiGridBundle\Model\Column;
-use Survos\FieldBundle\Entity\RouteParametersInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
 use Twig\TwigFunction;
+
 use function Symfony\Component\String\u;
 
 class TwigExtension extends AbstractExtension
 {
     public function __construct(
         private readonly ?IriConverterInterface $iriConverter = null,
-    ) {}
+    ) {
+    }
 
     public function getFilters(): array
     {
         return [
             new TwigFilter('array_is_list', fn ($x) => is_array($x) && array_is_list($x)),
-            new TwigFilter('is_array',      fn ($x) => is_array($x)),
+            new TwigFilter('is_array', fn ($x) => is_array($x)),
             new TwigFilter('datatable', [$this, 'datatable'], ['is_safe' => ['html']]),
         ];
     }
@@ -31,10 +32,11 @@ class TwigExtension extends AbstractExtension
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('api_route',      [$this, 'apiCollectionRoute']),
+            new TwigFunction('api_route', [$this, 'apiCollectionRoute']),
             new TwigFunction('api_item_route', [$this, 'apiItemRoute']),
             new TwigFunction('setAttribute', function (array $object, $attribute, $value) {
                 $object[$attribute] = $value;
+
                 return $object;
             }),
             new TwigFunction('col', function (...$params) {
@@ -42,6 +44,7 @@ class TwigExtension extends AbstractExtension
                 foreach ($params as $key => $value) {
                     $newParams[u($key)->camel()->toString()] = $value;
                 }
+
                 return new Column(...$newParams);
             }, ['is_variadic' => true]),
         ];
@@ -59,6 +62,7 @@ class TwigExtension extends AbstractExtension
 
         try {
             $class = is_object($entityOrClass) ? $entityOrClass::class : $entityOrClass;
+
             return $this->iriConverter->getIriFromResource($class, operation: new GetCollection(), context: $context);
         } catch (\Throwable) {
             return null;

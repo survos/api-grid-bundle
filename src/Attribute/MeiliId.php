@@ -1,10 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Survos\ApiGridBundle\Attribute;
 
-use \Attribute;
-
-#[Attribute(Attribute::TARGET_METHOD|Attribute::TARGET_PROPERTY)]
+#[\Attribute(\Attribute::TARGET_METHOD | \Attribute::TARGET_PROPERTY)]
 class MeiliId
 {
     public function __construct(

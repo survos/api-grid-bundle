@@ -1,10 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Survos\ApiGridBundle\Attribute;
 
-use Attribute;
-
-#[Attribute(Attribute::TARGET_CLASS)]
+#[\Attribute(\Attribute::TARGET_CLASS)]
 class Crud
 {
     public function __construct(

@@ -1,19 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Survos\ApiGridBundle\Filter\MeiliSearch;
 
-use Survos\ApiGridBundle\Filter\MeiliSearch\FilterInterface;
-use ApiPlatform\Metadata\ResourceClassResolverInterface;
-use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
-use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
 use ApiPlatform\Metadata\Property\Factory\PropertyNameCollectionFactoryInterface;
-use Doctrine\ORM\QueryBuilder;
-use Doctrine\Persistence\ManagerRegistry;
-use Psr\Log\LoggerInterface;
+use ApiPlatform\Metadata\ResourceClassResolverInterface;
 use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
-use ApiPlatform\Metadata\InvalidArgumentException;
 
 /**
  * Selects entities where each search term is found somewhere
@@ -21,40 +16,39 @@ use ApiPlatform\Metadata\InvalidArgumentException;
  * Search terms must be separated by spaces.
  * Search is case-insensitive.
  * All specified properties type must be string.
- * @package App\Filter
  */
-class MultiFieldSearchFilter  extends AbstractSearchFilter implements FilterInterface
+class MultiFieldSearchFilter extends AbstractSearchFilter implements FilterInterface
 {
-    public function __construct(PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory, PropertyMetadataFactoryInterface $propertyMetadataFactory, ResourceClassResolverInterface $resourceClassResolver, ?NameConverterInterface $nameConverter = null, private string  $searchParameterName = 'search', ?array $properties = null)
+    public function __construct(PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory, PropertyMetadataFactoryInterface $propertyMetadataFactory, ResourceClassResolverInterface $resourceClassResolver, ?NameConverterInterface $nameConverter = null, private string $searchParameterName = 'search', ?array $properties = null)
     {
         parent::__construct($propertyNameCollectionFactory, $propertyMetadataFactory, $resourceClassResolver, $nameConverter, $properties);
     }
 
-    public function apply(array $clauseBody, string $resourceClass, ?Operation $operation = null, array $context = []): array {
-
-        if(!isset($context['filters']['facet_filter'])) {
+    public function apply(array $clauseBody, string $resourceClass, ?Operation $operation = null, array $context = []): array
+    {
+        if (!isset($context['filters']['facet_filter'])) {
             return $clauseBody;
         }
-        //return $clauseBody;
-        $facetFilter = isset($clauseBody['filter'])?$clauseBody['filter']." AND ":"";
-        foreach($context['filters']['facet_filter'] as $filter) {
+        // return $clauseBody;
+        $facetFilter = isset($clauseBody['filter']) ? $clauseBody['filter'].' AND ' : '';
+        foreach ($context['filters']['facet_filter'] as $filter) {
             $words = explode(',', $filter);
-            if(count($words) < 3) {
+            if (count($words) < 3) {
                 return $clauseBody;
             }
             $key = $words[0];
             $values = explode('|', $words[2]);
-            $condition = "";
+            $condition = '';
             foreach ($values as $value) {
-                $condition .= " ".$key." = '".$value."' OR ";
+                $condition .= ' '.$key." = '".$value."' OR ";
             }
-            $facetFilter .=" ( ".rtrim($condition,"OR "). " ) AND";
+            $facetFilter .= ' ( '.rtrim($condition, 'OR ').' ) AND';
         }
 
-        $clauseBody['filter'] = rtrim($facetFilter, "AND");
+        $clauseBody['filter'] = rtrim($facetFilter, 'AND');
+
         return $clauseBody;
     }
-
 
     public function getDescription(string $resourceClass): array
     {
@@ -62,6 +56,7 @@ class MultiFieldSearchFilter  extends AbstractSearchFilter implements FilterInte
         if (null === $props) {
             throw new \InvalidArgumentException('Properties must be specified');
         }
+
         return [
             $this->searchParameterName => [
                 'property' => implode(', ', array_keys($props)),

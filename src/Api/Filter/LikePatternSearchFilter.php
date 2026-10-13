@@ -52,8 +52,8 @@ final class LikePatternSearchFilter extends AbstractFilter implements FilterInte
         }
 
         $values = is_array($value) ? $value : [$value];
-        $values = array_values(array_filter($values, static fn (mixed $v): bool => is_scalar($v) && trim((string) $v) !== ''));
-        if ($values === []) {
+        $values = array_values(array_filter($values, static fn (mixed $v): bool => is_scalar($v) && '' !== trim((string) $v)));
+        if ([] === $values) {
             return;
         }
 
@@ -79,7 +79,7 @@ final class LikePatternSearchFilter extends AbstractFilter implements FilterInte
         $or = $queryBuilder->expr()->orX();
         foreach ($values as $rawValue) {
             $pattern = $this->normalizePattern((string) $rawValue);
-            if ($pattern === '') {
+            if ('' === $pattern) {
                 continue;
             }
 
@@ -120,7 +120,7 @@ final class LikePatternSearchFilter extends AbstractFilter implements FilterInte
     private function normalizePattern(string $value): string
     {
         $value = trim($value);
-        if ($value === '') {
+        if ('' === $value) {
             return '';
         }
 

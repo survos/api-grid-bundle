@@ -6,7 +6,7 @@ use Rector\Config\RectorConfig;
 
 return RectorConfig::configure()
     ->withPaths([
-        __DIR__ . '/src/Hydra',
+        __DIR__.'/src/Hydra',
     ])
     ->withRules([
         Rector\Php84\Rector\Param\ExplicitNullableParamTypeRector::class,

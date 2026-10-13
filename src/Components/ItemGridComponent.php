@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace Survos\ApiGridBundle\Components;
 
-use Doctrine\Bundle\DoctrineBundle\Registry;
 use Survos\ApiGridBundle\Model\Column;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
-use Symfony\UX\TwigComponent\Attribute\PostMount;
 use Symfony\UX\TwigComponent\Attribute\PreMount;
 
 #[AsTwigComponent('api_item_grid', template: '@SurvosApiGrid/components/item.html.twig')]
@@ -18,7 +16,7 @@ class ItemGridComponent
     {
     }
 
-    public $data = null;
+    public $data;
 
     public array $columns;
 
@@ -36,11 +34,12 @@ class ItemGridComponent
         ]);
         $parameters = $resolver->resolve($parameters);
         $data = $parameters['data'];
-        if (count($parameters['columns']) === 0) {
+        if (0 === count($parameters['columns'])) {
             if (is_array($data)) {
                 $parameters['columns'] = array_keys($data);
             }
         }
+
         return $parameters;
     }
 
@@ -60,6 +59,7 @@ class ItemGridComponent
             $column = new Column(...$c);
             $normalizedColumns[$column->name] = $column;
         }
+
         return $normalizedColumns;
     }
 }

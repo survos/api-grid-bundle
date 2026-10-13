@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Survos\ApiGridBundle\Model;
 
 class Column
@@ -27,8 +29,8 @@ class Column
 
         // null = inherit from #[Field]; explicit bool overrides the attribute
         public ?bool $searchable = null,
-        public ?bool $sortable   = null,
-        public ?bool $browsable  = null,
+        public ?bool $sortable = null,
+        public ?bool $browsable = null,
 
         public bool $useDatatables = true,
         public bool $translateValue = false,

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Survos\ApiGridBundle\Service;
 
-use ApiPlatform\Metadata\ApiFilter;
-use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Doctrine\Orm\Filter\EndSearchFilter;
 use ApiPlatform\Doctrine\Orm\Filter\ExactFilter;
 use ApiPlatform\Doctrine\Orm\Filter\FreeTextQueryFilter;
@@ -14,14 +12,17 @@ use ApiPlatform\Doctrine\Orm\Filter\PartialSearchFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SortFilter;
 use ApiPlatform\Doctrine\Orm\Filter\StartSearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Parameter;
 use Doctrine\ORM\Mapping\Id;
 use Survos\ApiGridBundle\Api\Filter\FacetsFieldSearchFilter;
 use Survos\ApiGridBundle\Api\Filter\LikePatternSearchFilter;
 use Survos\ApiGridBundle\Api\Filter\MultiFieldSearchFilter;
-use Survos\FieldBundle\Service\FieldReader;
 use Survos\ApiGridBundle\Model\Column;
+use Survos\FieldBundle\Service\FieldReader;
+
 use function Symfony\Component\String\u;
 
 class DatatableService
@@ -32,7 +33,6 @@ class DatatableService
     }
 
     /**
-     * @param array $columns
      * @return array<int, Column>
      */
     public function normalizedColumns(array $settings, array $columns, array $customColumnTemplates): iterable
@@ -53,12 +53,12 @@ class DatatableService
 
             if (is_string($c)) {
                 $c = [
-                    'order' => ($idx+1) * 10,
+                    'order' => ($idx + 1) * 10,
                     'name' => $c,
                 ];
             }
             if (is_object($c)) {
-                assert($c::class == Column::class);
+                assert(Column::class == $c::class);
                 $column = $c;
                 $columnName = $column->name;
                 // ugh, duplicated.  need to separate and have application-specific templates
@@ -74,7 +74,7 @@ class DatatableService
                 if (!$block = $c['block'] ?? false) {
                     $block = $columnName;
                 }
-//                if ($columnName <> $block) { dd($block, $columnName); }
+                //                if ($columnName <> $block) { dd($block, $columnName); }
                 $fixDotColumnName = str_replace('.', '_', $block);
                 if (array_key_exists($fixDotColumnName, $customColumnTemplates)) {
                     $c['twigTemplate'] = $customColumnTemplates[$fixDotColumnName];
@@ -82,24 +82,23 @@ class DatatableService
                 assert(is_array($c));
                 // Identifier and renderer metadata are not Column constructor options.
                 unset($c['propertyConfig'], $c['is_primary'], $c['renderType']);
-//            dd($c);
+                //            dd($c);
 
                 $column = new Column(...$c);
-
             }
             // Apply #[Field] settings as defaults — explicit col() args override via ??=.
             // col('code') inherits searchable/sortable/browsable/visible/width from #[Field].
             // col('code', searchable: false) explicitly disables even if #[Field] says true.
             if ($fieldSettings = $settings[$columnName] ?? null) {
                 $column->searchable ??= $fieldSettings['searchable'] ?? false;
-                $column->sortable   ??= $fieldSettings['sortable']   ?? false;
-                $column->browsable  ??= $fieldSettings['browsable']  ?? false;
-                $column->visible    ??= $fieldSettings['visible']    ?? null;
-                $column->width      ??= $fieldSettings['width']      ?? null;
-                $column->group      ??= $fieldSettings['group']      ?? null;
-                $column->widget     ??= $fieldSettings['widget']     ?? null;
-                $column->type       ??= $fieldSettings['type']       ?? null;
-                $column->group      ??= $fieldSettings['group']      ?? null;
+                $column->sortable ??= $fieldSettings['sortable'] ?? false;
+                $column->browsable ??= $fieldSettings['browsable'] ?? false;
+                $column->visible ??= $fieldSettings['visible'] ?? null;
+                $column->width ??= $fieldSettings['width'] ?? null;
+                $column->group ??= $fieldSettings['group'] ?? null;
+                $column->widget ??= $fieldSettings['widget'] ?? null;
+                $column->type ??= $fieldSettings['type'] ?? null;
+                $column->group ??= $fieldSettings['group'] ?? null;
                 if (empty($column->title) || $column->title === $column->name) {
                     $column->title = $fieldSettings['title'] ?? $column->name;
                 }
@@ -112,12 +111,12 @@ class DatatableService
             if ($column->condition) {
                 $normalizedColumns[] = $column;
             }
-//                            if ($c['name'] == 'image_count') dd($c, $column);
-
+            //                            if ($c['name'] == 'image_count') dd($c, $column);
 
             //            $normalizedColumns[$column->name] = $column;
         }
-//        dd($normalizedColumns, $settings);
+
+        //        dd($normalizedColumns, $settings);
         return $normalizedColumns;
     }
 
@@ -125,12 +124,14 @@ class DatatableService
     {
         $fields = [];
         foreach ($settings as $fieldName => $attributes) {
-            if ($attributes[$internalAttribute]??false) {
+            if ($attributes[$internalAttribute] ?? false) {
                 $fields[] = $fieldName;
             }
         }
+
         return $fields;
     }
+
     public function getSettingsFromAttributes(string $class): array
     {
         assert(class_exists($class), $class);
@@ -138,22 +139,22 @@ class DatatableService
         $settings = [];
 
         // ── Layer 1: #[Field] via FieldReader (authoritative when present) ───────
-        if ($this->fieldReader !== null) {
+        if (null !== $this->fieldReader) {
             foreach ($this->fieldReader->getDescriptors($class) as $descriptor) {
                 $name = $descriptor->name;
                 $settings[$name] = array_merge($settings[$name] ?? [], array_filter([
-                    'name'       => $name,
-                    'type'       => $descriptor->type,
-                    'title'      => $descriptor->getFallbackLabel(),
+                    'name' => $name,
+                    'type' => $descriptor->type,
+                    'title' => $descriptor->getFallbackLabel(),
                     'searchable' => $descriptor->searchable ?: null,
-                    'sortable'   => ($descriptor->sortable || $this->isNaturallySortable($descriptor->type)) ?: null,
-                    'browsable'  => ($descriptor->filterable && ($descriptor->resolvedWidget()?->isBrowsable() ?? false)) ?: null,
-                    'visible'    => $descriptor->visible === false ? false : null,
-                    'width'      => $descriptor->width,
-                    'group'      => $descriptor->group,
-                    'widget'     => $descriptor->resolvedWidget()?->value,
+                    'sortable' => ($descriptor->sortable || $this->isNaturallySortable($descriptor->type)) ?: null,
+                    'browsable' => ($descriptor->filterable && ($descriptor->resolvedWidget()?->isBrowsable() ?? false)) ?: null,
+                    'visible' => false === $descriptor->visible ? false : null,
+                    'width' => $descriptor->width,
+                    'group' => $descriptor->group,
+                    'widget' => $descriptor->resolvedWidget()?->value,
                     'renderType' => $descriptor->isUrl ? 'url' : ($descriptor->isEmail ? 'email' : null),
-                ], fn ($v) => $v !== null));
+                ], fn ($v) => null !== $v));
             }
         }
 
@@ -164,7 +165,7 @@ class DatatableService
                 continue;
             }
             /** @var ApiFilter $apiFilter */
-            $apiFilter   = $attribute->newInstance();
+            $apiFilter = $attribute->newInstance();
             $filterClass = $apiFilter->filterClass;
             if (!$filterClass) {
                 continue;
@@ -175,13 +176,13 @@ class DatatableService
                 }
                 $settings[$property] ??= ['name' => $property];
                 match (true) {
-                    is_a($filterClass, OrderFilter::class, true)                           => $settings[$property]['sortable']   = true,
-                    is_a($filterClass, SearchFilter::class, true)                          => $settings[$property]['searchable'] = true,
-                    is_a($filterClass, LikePatternSearchFilter::class, true)                => $settings[$property]['searchable'] = true,
-                    is_a($filterClass, MultiFieldSearchFilter::class, true)                => $settings[$property]['searchable'] = true,
-                    is_a($filterClass, FacetsFieldSearchFilter::class, true)               => $settings[$property]['browsable']  = true,
-                    str_ends_with($filterClass, '\\FacetsFieldSearchFilter')               => $settings[$property]['browsable']  = true,
-                    default                                                                => null,
+                    is_a($filterClass, OrderFilter::class, true) => $settings[$property]['sortable'] = true,
+                    is_a($filterClass, SearchFilter::class, true) => $settings[$property]['searchable'] = true,
+                    is_a($filterClass, LikePatternSearchFilter::class, true) => $settings[$property]['searchable'] = true,
+                    is_a($filterClass, MultiFieldSearchFilter::class, true) => $settings[$property]['searchable'] = true,
+                    is_a($filterClass, FacetsFieldSearchFilter::class, true) => $settings[$property]['browsable'] = true,
+                    str_ends_with($filterClass, '\\FacetsFieldSearchFilter') => $settings[$property]['browsable'] = true,
+                    default => null,
                 };
             }
         }
@@ -203,9 +204,9 @@ class DatatableService
                 $settings[$property] ??= ['name' => $property];
                 match (true) {
                     is_a($filterClass, SortFilter::class, true),
-                    is_a($filterClass, OrderFilter::class, true)             => $settings[$property]['sortable']   = true,
+                    is_a($filterClass, OrderFilter::class, true) => $settings[$property]['sortable'] = true,
                     is_a($filterClass, FacetsFieldSearchFilter::class, true),
-                    str_ends_with($filterClass, '\\FacetsFieldSearchFilter') => $settings[$property]['browsable']  = true,
+                    str_ends_with($filterClass, '\\FacetsFieldSearchFilter') => $settings[$property]['browsable'] = true,
                     is_a($filterClass, ExactFilter::class, true),
                     is_a($filterClass, PartialSearchFilter::class, true),
                     is_a($filterClass, StartSearchFilter::class, true),
@@ -213,8 +214,8 @@ class DatatableService
                     is_a($filterClass, FreeTextQueryFilter::class, true),
                     is_a($filterClass, SearchFilter::class, true),
                     is_a($filterClass, LikePatternSearchFilter::class, true),
-                    is_a($filterClass, MultiFieldSearchFilter::class, true)  => $settings[$property]['searchable'] = true,
-                    default                                                  => null,
+                    is_a($filterClass, MultiFieldSearchFilter::class, true) => $settings[$property]['searchable'] = true,
+                    default => null,
                 };
             }
         }
@@ -224,11 +225,11 @@ class DatatableService
             $name = $property->getName();
             foreach ($property->getAttributes() as $attribute) {
                 match ($attribute->getName()) {
-                    Id::class          => $settings[$name]['is_primary'] = true,
+                    Id::class => $settings[$name]['is_primary'] = true,
                     ApiProperty::class => $attribute->getArguments()['identifier'] ?? false
                                             ? ($settings[$name]['is_primary'] = true)
                                             : null,
-                    default            => null,
+                    default => null,
                 };
             }
         }
@@ -254,7 +255,7 @@ class DatatableService
     }
 
     /** @return iterable<string, Parameter> */
-    private function parametersOf(iterable|null $parameters): iterable
+    private function parametersOf(?iterable $parameters): iterable
     {
         foreach ($parameters ?? [] as $key => $parameter) {
             if ($parameter instanceof Parameter) {
@@ -268,6 +269,4 @@ class DatatableService
         return in_array($type, ['int', 'float', 'bool'], true)
             || is_a($type, \DateTimeInterface::class, true);
     }
-
-
 }

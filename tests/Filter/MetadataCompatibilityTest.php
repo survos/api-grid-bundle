@@ -35,13 +35,12 @@ final class MetadataCompatibilityTest extends TestCase
     public function testScalarNullableAssociationAndNestedCollection(string $filterClass): void
     {
         $metadata = $this->createStub(PropertyMetadataFactoryInterface::class);
-        $metadata->method('create')->willReturnCallback(static fn (string $class, string $property): ApiProperty =>
-            new ApiProperty(nativeType: match ($property) {
-                'title' => Type::nullable(Type::string()),
-                'author' => Type::nullable(Type::object(Author::class)),
-                'books' => Type::list(Type::object(Book::class)),
-                'unknown' => null,
-            })
+        $metadata->method('create')->willReturnCallback(static fn (string $class, string $property): ApiProperty => new ApiProperty(nativeType: match ($property) {
+            'title' => Type::nullable(Type::string()),
+            'author' => Type::nullable(Type::object(Author::class)),
+            'books' => Type::list(Type::object(Book::class)),
+            'unknown' => null,
+        })
         );
         $resolver = $this->createStub(ResourceClassResolverInterface::class);
         $resolver->method('isResourceClass')->willReturnCallback(static fn (string $class): bool => in_array($class, [Author::class, Book::class], true));
@@ -62,15 +61,40 @@ final class MetadataCompatibilityTest extends TestCase
 
 trait MetadataProbe
 {
-    public function metadata(string $class, string $property): array { return $this->getMetadata($class, $property); }
-    public function nested(string $class, string $property): ?string { return $this->getNestedFieldPath($class, $property); }
-    public function getDescription(string $resourceClass): array { return []; }
-    public function apply(array $clauseBody, string $resourceClass, ?Operation $operation = null, array $context = []): array { return $clauseBody; }
+    public function metadata(string $class, string $property): array
+    {
+        return $this->getMetadata($class, $property);
+    }
+
+    public function nested(string $class, string $property): ?string
+    {
+        return $this->getNestedFieldPath($class, $property);
+    }
+
+    public function getDescription(string $resourceClass): array
+    {
+        return [];
+    }
+
+    public function apply(array $clauseBody, string $resourceClass, ?Operation $operation = null, array $context = []): array
+    {
+        return $clauseBody;
+    }
 }
 
-final class GridMetadataProbe extends \Survos\ApiGridBundle\Filter\MeiliSearch\AbstractSearchFilter { use MetadataProbe; }
-if (class_exists(\Survos\MeiliBundle\Filter\MeiliSearch\AbstractSearchFilter::class)) {
-    final class MeiliMetadataProbe extends \Survos\MeiliBundle\Filter\MeiliSearch\AbstractSearchFilter { use MetadataProbe; }
+final class GridMetadataProbe extends \Survos\ApiGridBundle\Filter\MeiliSearch\AbstractSearchFilter
+{
+    use MetadataProbe;
 }
-final class Author {}
-final class Book {}
+if (class_exists(\Survos\MeiliBundle\Filter\MeiliSearch\AbstractSearchFilter::class)) {
+    final class MeiliMetadataProbe extends \Survos\MeiliBundle\Filter\MeiliSearch\AbstractSearchFilter
+    {
+        use MetadataProbe;
+    }
+}
+final class Author
+{
+}
+final class Book
+{
+}

@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Survos\ApiGridBundle\Filter\MeiliSearch;
 
-use ApiPlatform\Metadata\ResourceClassResolverInterface;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
 use ApiPlatform\Metadata\Property\Factory\PropertyNameCollectionFactoryInterface;
+use ApiPlatform\Metadata\ResourceClassResolverInterface;
 use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
 final class SortFilter extends AbstractSearchFilter implements FilterInterface
@@ -18,22 +20,21 @@ final class SortFilter extends AbstractSearchFilter implements FilterInterface
     public const DIRECTION_ASC = 'ASC';
     public const DIRECTION_DESC = 'DESC';
 
-    public function apply(array $clauseBody, string $resourceClass, ?Operation $operation = null, array $context = []): array {
-
+    public function apply(array $clauseBody, string $resourceClass, ?Operation $operation = null, array $context = []): array
+    {
         if (!\is_array($properties = $context['filters'][$this->orderParameterName] ?? [])) {
             return $clauseBody;
         }
 
         $orders = [];
         foreach ($properties as $property => $direction) {
-
             if (!\in_array($direction = strtolower($direction), ['asc', 'desc'], true)) {
                 continue;
             }
 
             $property = null === $this->nameConverter ? $property : $this->nameConverter->normalize($property, $resourceClass, null, $context);
-            //$orders[] = $property.":".$direction;
-            array_push($orders, $property.":".$direction);
+            // $orders[] = $property.":".$direction;
+            array_push($orders, $property.':'.$direction);
         }
 
         if (!$orders) {
@@ -64,7 +65,7 @@ final class SortFilter extends AbstractSearchFilter implements FilterInterface
                         strtolower(self::DIRECTION_ASC),
                         strtolower(self::DIRECTION_DESC),
                     ],
-                ]
+                ],
             ];
         }
 
