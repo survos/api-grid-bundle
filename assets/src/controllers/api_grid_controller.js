@@ -11,7 +11,8 @@ import { installSymfonyTwigAPI } from "@tacman1123/twig-browser/adapters/symfony
 
 let Routing = null;
 try {
-  const mod = await import("@survos/js-twig-bundle/routing");
+  // The app's assets/router.js (symfony/ux-router), mapped in importmap.php as 'router'.
+  const mod = await import("router");
   if (typeof mod.path === "function") {
     Routing = { generate: mod.path };
   }
@@ -20,7 +21,7 @@ try {
 }
 
 if (!Routing) {
-  console.error("[api-grid] js-twig routing is unavailable. Run cache:warmup and check var/js_twig_bundle/generated/routes.json; no routing importmap entry is needed.");
+  console.error("[api-grid] Routing is unavailable. Install symfony/ux-router and map 'router' => ['path' => './assets/router.js'] in importmap.php.");
 }
 
 const contentTypes = {

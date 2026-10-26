@@ -41,6 +41,19 @@ Assets are registered via Symfony UX and AssetMapper. The canonical package name
 }
 ```
 
+### Routing
+
+`path()` in column blocks and the grid's own links come from the app's `assets/router.js`
+([symfony/ux-router](https://symfony.com/bundles/ux-router/current/index.html)), imported by the
+controller as `router`. Map it in `importmap.php` and expose the routes your blocks call:
+
+```php
+'router' => ['path' => './assets/router.js'],
+```
+
+`@survos/grid-bundle/src/controllers/grid_controller.js` is declared in this package's
+`symfony.importmap`, so Flex adds it. An app with `synchronize_package_json: false` must add it by hand.
+
 Run `php bin/console importmap:install` after upgrading and clear the application cache. DataTables pins come from Grid's `symfony.importmap` manifest. Reconcile stale application pins with that manifest; changing npm `dependencies` alone does not update Flex importmaps.
 
 Core CSS is imported by the controller. Extensions and their CSS load only when the selected grid features require them. Remove old global DataTables CSS autoimports from application controller configuration. Detail dialogs reuse `window.bootstrap` when supplied by the host or import `Modal` / `Offcanvas` from the host's `@tabler/core`; Tabler does not create that global itself.

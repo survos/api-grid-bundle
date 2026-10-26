@@ -16,7 +16,8 @@
     "importmap": {
       "@tacman1123/twig-browser": "^1.0.0",
       "@tacman1123/twig-browser/adapters/symfony": "^1.0.0",
-      "stimulus-attributes": "^1.0.2"
+      "stimulus-attributes": "^1.0.2",
+      "@survos/grid-bundle/src/controllers/grid_controller.js": "path:@survos/grid-bundle/src/controllers/grid_controller.js"
     }
   },
   "peerDependencies": {
