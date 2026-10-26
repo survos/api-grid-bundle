@@ -22,6 +22,7 @@
         "symfony/dependency-injection": "^7.4||^8.1",
         "symfony/http-kernel": "^7.4||^8.1",
         "symfony/options-resolver": "^7.4||^8.1",
+        "symfony/ux-router": "^3.6",
         "symfony/ux-twig-component": "^3",
         "twig/twig": "^3.4|^4.0",
         "symfony/dom-crawler": "^7.4||^8.1",

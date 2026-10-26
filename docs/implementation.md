@@ -56,7 +56,7 @@ Custom rendering:
 
 - column `twigTemplate` strings are compiled by the twig-browser engine
 - the render function receives `row`, `data`, `column`, `globals`, `field_name`
-- `path()` is provided via `@survos/js-twig-bundle/routing` (js-twig-bundle; cache-warmed JSON, no app importmap entry)
+- `path()` is provided by the app's `router` module (symfony/ux-router; map `'router' => ['path' => './assets/router.js']` in `importmap.php`)
 
 ### Pagination and collection normalization
 
